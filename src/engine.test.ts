@@ -185,8 +185,14 @@ export async function up() {}
     });
 
     it('increments prefix based on existing migrations', async () => {
-      await fs.writeFile(path.join(migrationsDir, '001-existing.ts'), 'export async function up() {}');
-      await fs.writeFile(path.join(migrationsDir, '002-another.ts'), 'export async function up() {}');
+      await fs.writeFile(
+        path.join(migrationsDir, '001-existing.ts'),
+        'export async function up() {}'
+      );
+      await fs.writeFile(
+        path.join(migrationsDir, '002-another.ts'),
+        'export async function up() {}'
+      );
 
       const filePath = await createMigration(migrationsDir, 'new migration');
 

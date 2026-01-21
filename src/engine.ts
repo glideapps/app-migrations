@@ -1,7 +1,12 @@
 import path from 'path';
 import { loadMigrations } from './loader.js';
 import { appendHistory, getState } from './state.js';
-import { createProjectDirectory, type MigrationResult, type MigrationState, type MigrateOptions } from './types.js';
+import {
+  createProjectDirectory,
+  type MigrationResult,
+  type MigrationState,
+  type MigrateOptions,
+} from './types.js';
 
 /**
  * Get the default migrations directory for a project.
@@ -109,7 +114,7 @@ export async function createMigration(
 
   let nextPrefix = 1;
   if (existing.length > 0) {
-    const maxPrefix = Math.max(...existing.map(m => m.prefix));
+    const maxPrefix = Math.max(...existing.map((m) => m.prefix));
     nextPrefix = maxPrefix + 1;
   }
 

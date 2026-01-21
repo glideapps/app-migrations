@@ -35,7 +35,7 @@ export async function discoverMigrations(migrationsDir: string): Promise<string[
 
   // Filter to only files matching the expected pattern and sort by prefix
   return files
-    .filter(file => {
+    .filter((file) => {
       const filename = path.basename(file);
       return MIGRATION_PATTERN.test(filename);
     })
@@ -61,7 +61,7 @@ export async function loadMigrationFile(filePath: string): Promise<LoadedMigrati
 
   // Use file URL for dynamic import (required for ESM)
   const fileUrl = pathToFileURL(filePath).href;
-  const module = await import(fileUrl) as Migration;
+  const module = (await import(fileUrl)) as Migration;
 
   // Validate the module has the required exports
   if (typeof module.up !== 'function') {
@@ -95,10 +95,12 @@ export async function loadMigrations(migrationsDir: string): Promise<LoadedMigra
  * List all available migrations without loading their modules.
  * Useful for quick status checks.
  */
-export async function listMigrationFiles(migrationsDir: string): Promise<{ id: string; prefix: number; filePath: string }[]> {
+export async function listMigrationFiles(
+  migrationsDir: string
+): Promise<{ id: string; prefix: number; filePath: string }[]> {
   const files = await discoverMigrations(migrationsDir);
 
-  return files.map(file => {
+  return files.map((file) => {
     const filename = path.basename(file);
     const prefix = extractPrefix(filename) ?? 0;
     const id = extractId(filename);

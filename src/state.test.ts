@@ -52,9 +52,7 @@ describe('state', () => {
 
       const result = await readHistory(migrationsDir);
 
-      expect(result).toEqual([
-        { id: '001-initial', appliedAt: '2024-01-15T09:00:00.000Z' },
-      ]);
+      expect(result).toEqual([{ id: '001-initial', appliedAt: '2024-01-15T09:00:00.000Z' }]);
     });
 
     it('ignores empty lines', async () => {
@@ -78,20 +76,35 @@ describe('state', () => {
     });
 
     it('appends to existing history file', async () => {
-      await fs.writeFile(path.join(migrationsDir, '.history'), '001-initial 2024-01-15T09:00:00.000Z\n');
+      await fs.writeFile(
+        path.join(migrationsDir, '.history'),
+        '001-initial 2024-01-15T09:00:00.000Z\n'
+      );
 
       await appendHistory(migrationsDir, '002-add-feature', '2024-01-16T14:30:00.000Z');
 
       const content = await fs.readFile(path.join(migrationsDir, '.history'), 'utf-8');
-      expect(content).toBe('001-initial 2024-01-15T09:00:00.000Z\n002-add-feature 2024-01-16T14:30:00.000Z\n');
+      expect(content).toBe(
+        '001-initial 2024-01-15T09:00:00.000Z\n002-add-feature 2024-01-16T14:30:00.000Z\n'
+      );
     });
   });
 
   describe('getState', () => {
     it('returns all migrations as pending when history is empty', async () => {
       const mockMigrations: LoadedMigration[] = [
-        { id: '001-initial', prefix: 1, filePath: '/path/to/001-initial.ts', module: { up: async () => {} } },
-        { id: '002-add-feature', prefix: 2, filePath: '/path/to/002-add-feature.ts', module: { up: async () => {} } },
+        {
+          id: '001-initial',
+          prefix: 1,
+          filePath: '/path/to/001-initial.ts',
+          module: { up: async () => {} },
+        },
+        {
+          id: '002-add-feature',
+          prefix: 2,
+          filePath: '/path/to/002-add-feature.ts',
+          module: { up: async () => {} },
+        },
       ];
 
       const state = await getState(migrationsDir, mockMigrations);
@@ -102,18 +115,29 @@ describe('state', () => {
     });
 
     it('correctly separates applied and pending migrations', async () => {
-      await fs.writeFile(path.join(migrationsDir, '.history'), '001-initial 2024-01-15T09:00:00.000Z\n');
+      await fs.writeFile(
+        path.join(migrationsDir, '.history'),
+        '001-initial 2024-01-15T09:00:00.000Z\n'
+      );
 
       const mockMigrations: LoadedMigration[] = [
-        { id: '001-initial', prefix: 1, filePath: '/path/to/001-initial.ts', module: { up: async () => {} } },
-        { id: '002-add-feature', prefix: 2, filePath: '/path/to/002-add-feature.ts', module: { up: async () => {} } },
+        {
+          id: '001-initial',
+          prefix: 1,
+          filePath: '/path/to/001-initial.ts',
+          module: { up: async () => {} },
+        },
+        {
+          id: '002-add-feature',
+          prefix: 2,
+          filePath: '/path/to/002-add-feature.ts',
+          module: { up: async () => {} },
+        },
       ];
 
       const state = await getState(migrationsDir, mockMigrations);
 
-      expect(state.applied).toEqual([
-        { id: '001-initial', appliedAt: '2024-01-15T09:00:00.000Z' },
-      ]);
+      expect(state.applied).toEqual([{ id: '001-initial', appliedAt: '2024-01-15T09:00:00.000Z' }]);
       expect(state.pending).toEqual([mockMigrations[1]]);
     });
   });
