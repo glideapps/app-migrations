@@ -694,14 +694,16 @@ main();
     );
 
     // Check JSON output
-    let json_content = fs::read_to_string(temp_dir.path().join("runtime-test-typescript.json")).unwrap();
+    let json_content =
+        fs::read_to_string(temp_dir.path().join("runtime-test-typescript.json")).unwrap();
     let info: serde_json::Value = serde_json::from_str(&json_content).unwrap();
     assert_eq!(info["runtime"], "typescript");
     assert_eq!(info["dryRun"], false);
     assert!(info["features"].as_array().unwrap().len() >= 4);
 
     // Check verification file
-    let verify_content = fs::read_to_string(temp_dir.path().join("runtime-test-typescript-verify.txt")).unwrap();
+    let verify_content =
+        fs::read_to_string(temp_dir.path().join("runtime-test-typescript-verify.txt")).unwrap();
     assert!(verify_content.contains("Read config: sample-project"));
 }
 
@@ -766,13 +768,15 @@ if __name__ == '__main__':
     );
 
     // Check JSON output
-    let json_content = fs::read_to_string(temp_dir.path().join("runtime-test-python.json")).unwrap();
+    let json_content =
+        fs::read_to_string(temp_dir.path().join("runtime-test-python.json")).unwrap();
     let info: serde_json::Value = serde_json::from_str(&json_content).unwrap();
     assert_eq!(info["runtime"], "python");
     assert_eq!(info["dryRun"], false);
 
     // Check verification file
-    let verify_content = fs::read_to_string(temp_dir.path().join("runtime-test-python-verify.txt")).unwrap();
+    let verify_content =
+        fs::read_to_string(temp_dir.path().join("runtime-test-python-verify.txt")).unwrap();
     assert!(verify_content.contains("Read config: sample-project"));
     assert!(verify_content.contains("Features count: 2"));
 }
@@ -839,10 +843,14 @@ main();
     let info: serde_json::Value = serde_json::from_str(&json_content).unwrap();
     assert_eq!(info["runtime"], "node");
     assert_eq!(info["dryRun"], false);
-    assert!(info["features"].as_array().unwrap().contains(&serde_json::json!("commonjs")));
+    assert!(info["features"]
+        .as_array()
+        .unwrap()
+        .contains(&serde_json::json!("commonjs")));
 
     // Check verification file
-    let verify_content = fs::read_to_string(temp_dir.path().join("runtime-test-node-verify.txt")).unwrap();
+    let verify_content =
+        fs::read_to_string(temp_dir.path().join("runtime-test-node-verify.txt")).unwrap();
     assert!(verify_content.contains("Read config: sample-project"));
     assert!(verify_content.contains("Settings keys: debug, maxRetries"));
 }
@@ -905,10 +913,14 @@ VERIFY
     let info: serde_json::Value = serde_json::from_str(&json_content).unwrap();
     assert_eq!(info["runtime"], "ruby");
     assert_eq!(info["dryRun"], false);
-    assert!(info["features"].as_array().unwrap().contains(&serde_json::json!("symbols")));
+    assert!(info["features"]
+        .as_array()
+        .unwrap()
+        .contains(&serde_json::json!("symbols")));
 
     // Check verification file
-    let verify_content = fs::read_to_string(temp_dir.path().join("runtime-test-ruby-verify.txt")).unwrap();
+    let verify_content =
+        fs::read_to_string(temp_dir.path().join("runtime-test-ruby-verify.txt")).unwrap();
     assert!(verify_content.contains("Read config: sample-project"));
     assert!(verify_content.contains("Features: auth, logging"));
 }
