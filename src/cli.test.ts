@@ -256,4 +256,93 @@ export async function up() {
       expect(result).toContain('1 pending');
     });
   });
+
+  describe('migration file formats', () => {
+    /**
+     * These tests verify that the bundled CLI can load migrations in different formats.
+     *
+     * Background: Node.js < 22.6 cannot natively import .ts files without a loader like tsx.
+     * Node.js >= 22.6 has experimental TypeScript support (--experimental-strip-types).
+     *
+     * To ensure compatibility across Node versions (including CI which may use older Node),
+     * we support .mjs and .js migration files which work universally.
+     *
+     * Users on older Node versions must either:
+     * - Use .mjs/.js migration files
+     * - Run the CLI with tsx (e.g., `npx tsx node_modules/.bin/app-migrate`)
+     */
+    let tempDir: string;
+    let testProjectRoot: string;
+    let migrationsDir: string;
+
+    beforeEach(async () => {
+      tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'app-migrations-cli-test-'));
+      testProjectRoot = tempDir;
+      migrationsDir = path.join(testProjectRoot, 'migrations');
+      await fs.mkdir(migrationsDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    });
+
+    it('loads .mjs migration files (works on all Node.js versions)', async () => {
+      const migration = `export async function up() {}`;
+      await fs.writeFile(path.join(migrationsDir, '001-esmodule.mjs'), migration);
+
+      // Clear NODE_OPTIONS to ensure no TypeScript loaders are inherited
+      const env = { ...process.env };
+      delete env.NODE_OPTIONS;
+
+      const result = execSync(`node ${cliBinary} status -r ${testProjectRoot}`, {
+        encoding: 'utf-8',
+        env,
+      });
+
+      expect(result).toContain('001-esmodule');
+      expect(result).toContain('1 pending');
+    });
+
+    it('loads .js migration files (works on all Node.js versions)', async () => {
+      // .js files in ESM context (type: module) are treated as ES modules
+      const migration = `export async function up() {}`;
+      await fs.writeFile(path.join(migrationsDir, '001-javascript.js'), migration);
+
+      // Clear NODE_OPTIONS to ensure no TypeScript loaders are inherited
+      const env = { ...process.env };
+      delete env.NODE_OPTIONS;
+
+      const result = execSync(`node ${cliBinary} status -r ${testProjectRoot}`, {
+        encoding: 'utf-8',
+        env,
+      });
+
+      expect(result).toContain('001-javascript');
+      expect(result).toContain('1 pending');
+    });
+
+    it('applies .mjs migrations correctly', async () => {
+      const migration = `
+import fs from 'fs/promises';
+
+export async function up(project) {
+  await fs.writeFile(project.resolve('created.txt'), 'mjs migration');
+}
+`;
+      await fs.writeFile(path.join(migrationsDir, '001-create.mjs'), migration);
+
+      const env = { ...process.env };
+      delete env.NODE_OPTIONS;
+
+      const result = execSync(`node ${cliBinary} up -r ${testProjectRoot}`, {
+        encoding: 'utf-8',
+        env,
+      });
+
+      expect(result).toContain('Applied: 001-create');
+
+      const content = await fs.readFile(path.join(testProjectRoot, 'created.txt'), 'utf-8');
+      expect(content).toBe('mjs migration');
+    });
+  });
 });
