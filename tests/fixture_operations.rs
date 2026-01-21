@@ -121,7 +121,9 @@ set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
 
 # Replace "Hello, world!" with "Hello, migration!"
-sed -i '' 's/Hello, world!/Hello, migration!/' src/main.ts
+# Use temp file approach for cross-platform compatibility (BSD vs GNU sed)
+sed 's/Hello, world!/Hello, migration!/' src/main.ts > src/main.ts.tmp
+mv src/main.ts.tmp src/main.ts
 "#,
     );
 
