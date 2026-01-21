@@ -53,13 +53,13 @@ migrate up --dry-run
 migrate create add-prettier
 
 # Create a TypeScript migration
-migrate create add-config --runtime ts
+migrate create add-config --template ts
 
 # Create with description
 migrate create add-prettier -d "Add Prettier configuration"
 
-# List available runtimes
-migrate create --list-runtimes
+# List available templates
+migrate create --list-templates
 ```
 
 ## Writing Migrations
@@ -131,16 +131,17 @@ Migrations run in order by their numeric prefix (e.g., `001-`, `002-`) and are t
 | `-r, --root <path>`        | Project root directory                | `.`          |
 | `-m, --migrations <path>`  | Migrations directory                  | `migrations` |
 | `--dry-run`                | Preview changes (up only)             | `false`      |
-| `-t, --runtime <name>`     | Runtime template (create only)        | `bash`       |
+| `-t, --template <name>`    | Template to use (create only)         | `bash`       |
 | `-d, --description <text>` | Migration description (create only)   | -            |
-| `--list-runtimes`          | List available runtimes (create only) | -            |
+| `--list-templates`         | List available templates (create only)| -            |
 
-## Available Runtimes
+## Available Templates
 
 - `bash` - Shell script (`.sh`)
 - `ts` - TypeScript via tsx (`.ts`)
 - `python` - Python 3 (`.py`)
 - `node` - Node.js (`.js`)
+- `ruby` - Ruby (`.rb`)
 
 ## Development
 
