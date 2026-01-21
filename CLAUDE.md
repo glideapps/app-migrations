@@ -1,14 +1,16 @@
-# app-migrations
+# migrate
 
-File system migration tool for applying ordered transformations to a project directory.
+Generic file migration tool for applying ordered transformations to a project directory. Migrations can be written in any language (bash, TypeScript, Python, etc.) using shebangs.
 
 ## Commands
 
 ```bash
-app-migrate status              # Show applied/pending migrations
-app-migrate up                  # Apply all pending migrations
-app-migrate up --dry-run        # Preview without applying
-app-migrate create <name>       # Create new migration file
+migrate status                              # Show applied/pending migrations
+migrate up                                  # Apply all pending migrations
+migrate up --dry-run                        # Preview without applying
+migrate create <name>                       # Create new bash migration
+migrate create <name> --runtime ts          # Create TypeScript migration
+migrate create <name> --list-runtimes       # List available runtimes
 ```
 
 ## Options
@@ -20,31 +22,62 @@ All commands accept:
 
 ## Migration Format
 
-Files: `NNN-name.ts` (e.g., `001-add-typescript.ts`)
+Files: `NNN-name.{sh,ts,py,js,...}` (e.g., `001-add-config.sh`)
 
+Migrations are executable files that receive context via environment variables:
+
+```bash
+MIGRATE_PROJECT_ROOT=/path/to/project      # Absolute path to project root
+MIGRATE_MIGRATIONS_DIR=/path/to/migrations # Where migration files live
+MIGRATE_ID=001-initial-setup               # Current migration ID
+MIGRATE_DRY_RUN=true|false                 # Whether this is a dry run
+```
+
+**Bash example:**
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+# Description: Initialize project structure
+
+cd "$MIGRATE_PROJECT_ROOT"
+mkdir -p config
+```
+
+**TypeScript example:**
 ```typescript
-import type { ProjectDirectory } from 'app-migrations';
+#!/usr/bin/env -S npx tsx
+// Description: Add configuration file
 
-export const description = 'What this migration does';
-
-export async function up(project: ProjectDirectory): Promise<void> {
-  // project.resolve('path') returns absolute path within project
-}
+import * as fs from 'fs/promises';
+const projectRoot = process.env.MIGRATE_PROJECT_ROOT!;
+await fs.writeFile(`${projectRoot}/config.json`, '{}');
 ```
 
 ## Architecture
 
-- `src/cli.ts` - CLI commands
-- `src/engine.ts` - Migration execution
-- `src/loader.ts` - Discovery and loading
-- `src/state.ts` - History tracking (`.history` file)
-- `src/types.ts` - TypeScript interfaces
+- `src/main.rs` - CLI entry point (clap)
+- `src/lib.rs` - Core types and public API
+- `src/loader.rs` - Migration discovery
+- `src/executor.rs` - Subprocess execution
+- `src/state.rs` - History tracking (`.history` file)
+- `src/templates.rs` - Embedded migration templates
+- `src/commands/` - CLI command implementations
+  - `mod.rs` - Command module exports
+  - `status.rs` - Status command
+  - `up.rs` - Up command
+  - `create.rs` - Create command
+- `templates/` - Template source files (bash.sh, typescript.ts, python.py, node.js)
 
 ## Development
 
 ```bash
-npm test          # Run tests
-npm run build     # Build
-npm run lint      # Lint
-npm run format    # Format code with Prettier
+# Setup (enable git hooks, verify toolchain)
+./scripts/setup
+
+# Build and test
+cargo nextest run      # Run tests
+cargo build            # Build debug binary
+cargo build --release  # Build release binary
+cargo fmt              # Format code
+cargo clippy           # Lint
 ```

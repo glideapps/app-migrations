@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run tests with nextest (concise output, full details on failure)
+cargo nextest run --status-level=fail
