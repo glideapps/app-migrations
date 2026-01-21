@@ -1,0 +1,16 @@
+{
+  "name": "test-project",
+  "version": "1.0.0",
+  "description": "A test project for migration testing",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "build": "tsc",
+    "lint": "eslint src"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "eslint": "^8.56.0"
+  }
+}
