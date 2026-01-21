@@ -5,10 +5,10 @@ A generic file migration tool that applies ordered transformations to a project 
 ## Installation
 
 ```bash
-# Build from source
-cargo build --release
+# Install from crates.io
+cargo install migrate
 
-# Or install via cargo
+# Or build from source
 cargo install --path .
 ```
 
