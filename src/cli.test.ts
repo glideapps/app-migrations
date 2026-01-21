@@ -62,7 +62,7 @@ describe('CLI executable', () => {
 
     it('shows pending migrations', async () => {
       const migration = `export async function up() {}`;
-      await fs.writeFile(path.join(migrationsDir, '001-test-migration.ts'), migration);
+      await fs.writeFile(path.join(migrationsDir, '001-test-migration.mjs'), migration);
 
       const result = execSync(`node ${cliBinary} status -r ${testProjectRoot}`, {
         encoding: 'utf-8',
@@ -98,7 +98,7 @@ export async function up(project) {
   await fs.writeFile(project.resolve('created-by-cli.txt'), 'CLI test');
 }
 `;
-      await fs.writeFile(path.join(migrationsDir, '001-create-file.ts'), migration);
+      await fs.writeFile(path.join(migrationsDir, '001-create-file.mjs'), migration);
 
       const result = execSync(`node ${cliBinary} up -r ${testProjectRoot}`, {
         encoding: 'utf-8',
@@ -121,7 +121,7 @@ export async function up(project) {
   await fs.writeFile(project.resolve('should-not-exist.txt'), 'content');
 }
 `;
-      await fs.writeFile(path.join(migrationsDir, '001-test.ts'), migration);
+      await fs.writeFile(path.join(migrationsDir, '001-test.mjs'), migration);
 
       const result = execSync(`node ${cliBinary} up --dry-run -r ${testProjectRoot}`, {
         encoding: 'utf-8',
@@ -210,7 +210,7 @@ export async function up() {
   throw new Error('Intentional failure');
 }
 `;
-      await fs.writeFile(path.join(migrationsDir, '001-failing.ts'), migration);
+      await fs.writeFile(path.join(migrationsDir, '001-failing.mjs'), migration);
 
       try {
         execSync(`node ${cliBinary} up -r ${testProjectRoot}`, {
@@ -243,7 +243,7 @@ export async function up() {
     it('uses custom migrations directory with -m flag', async () => {
       const migration = `export async function up() {}`;
       await fs.writeFile(
-        path.join(testProjectRoot, 'custom-migrations', '001-custom.ts'),
+        path.join(testProjectRoot, 'custom-migrations', '001-custom.mjs'),
         migration
       );
 
