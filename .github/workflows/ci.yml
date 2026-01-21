@@ -16,27 +16,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          node-version: '20'
+          components: rustfmt, clippy
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
 
-      - name: Type check
-        run: npm run build
-
-      - name: Lint
-        run: npm run lint
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
 
       - name: Format check
-        run: npm run format:check
+        run: cargo fmt --check
+
+      - name: Lint
+        run: cargo clippy -- -D warnings
 
       - name: Run tests
-        run: npm test
+        run: cargo nextest run
 
-  publish:
+      - name: Build
+        run: cargo build --release
+
+  release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -45,31 +48,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
 
-      - name: Build
-        run: npm run build
+      - name: Build release
+        run: cargo build --release
 
       - name: Get version
         id: get-version
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-
-      - name: Publish to NPM
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "Error: NPM_PUBLISH_TOKEN secret is not set."
-            exit 1
-          fi
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+        run: echo "version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -77,5 +67,6 @@ jobs:
           tag_name: v${{ steps.get-version.outputs.version }}
           name: v${{ steps.get-version.outputs.version }}
           generate_release_notes: true
+          files: target/release/migrate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

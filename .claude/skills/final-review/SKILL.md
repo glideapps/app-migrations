@@ -18,25 +18,25 @@ Run `git fetch origin main` to ensure comparisons use the latest main branch.
 ### 1. Test Coverage
 
 - Run `git diff main --name-only` to identify changed files
-- Confirm each core module (`src/*.ts` excluding `.test.ts`) has a corresponding `src/*.test.ts`
-- Current modules requiring tests: `engine.ts`, `loader.ts`, `state.ts`
-- Note: `cli.ts`, `index.ts`, and `types.ts` do not require unit tests
-- Run `npm test`
+- Confirm each core module (`src/*.rs` excluding test modules) has corresponding tests
+- Current modules requiring tests: `loader.rs`, `executor.rs`, `state.rs`
+- Note: `main.rs`, `lib.rs`, `templates.rs`, and `src/commands/` do not require separate unit tests
+- Run `cargo test`
 
 **Fix:** Write missing tests, fix failing tests, re-run until green.
 
 ### 2. Build Verification
 
 ```bash
-npm run build && npm run lint && npm run format:check && npm test
+cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release
 ```
 
 This matches the CI pipeline defined in `.github/workflows/ci.yml`.
 
-**Fix:** Resolve type errors, lint errors, format issues:
+**Fix:** Resolve format errors, lint errors, test failures:
 
-- `npm run lint:fix` - auto-fix lint errors
-- `npm run format` - auto-fix formatting issues
+- `cargo fmt` - auto-fix formatting issues
+- Fix clippy warnings manually
 
 Re-run the verification commands until zero errors.
 
@@ -49,7 +49,7 @@ Verify all documentation sources are consistent:
 
 Check for:
 
-- CLI commands and options match between docs and `src/cli.ts`
+- CLI commands and options match between docs and `src/main.rs`
 - Architecture section lists all modules in `src/`
 - Example code is accurate and runnable
 
@@ -57,7 +57,7 @@ Check for:
 
 ### 4. Version Update
 
-Check `package.json` version against change scope:
+Check `Cargo.toml` version against change scope:
 
 - **Major:** Breaking changes (removed features, incompatible API changes)
 - **Minor:** New features (new CLI commands, new public API functions)
@@ -65,7 +65,7 @@ Check `package.json` version against change scope:
 
 Any user-facing change requires at least a patch bump.
 
-**Fix:** Update version in `package.json` if needed.
+**Fix:** Update version in `Cargo.toml` if needed.
 
 ### 5. PR Metadata (if PR exists)
 
@@ -90,7 +90,7 @@ Stage, commit, and push all fixes made during review.
 Changes: <tests added/fixed>
 
 ### Build Status
-[x] build/lint/format/test all pass
+[x] fmt/clippy/test/build all pass
 Changes: <code fixes>
 
 ### Documentation Consistency

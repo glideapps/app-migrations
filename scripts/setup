@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Setting up development environment..."
+
+# Enable git hooks
+git config core.hooksPath .githooks
+echo "✓ Git hooks enabled"
+
+# Verify Rust toolchain
+if command -v cargo &> /dev/null; then
+    echo "✓ Rust toolchain found: $(rustc --version)"
+else
+    echo "✗ Rust not found. Install from https://rustup.rs"
+    exit 1
+fi
+
+# Install required components
+rustup component add rustfmt clippy 2>/dev/null || true
+echo "✓ rustfmt and clippy installed"
+
+# Install cargo-nextest for better test output
+if ! command -v cargo-nextest &> /dev/null; then
+    echo "Installing cargo-nextest..."
+    cargo install cargo-nextest --quiet
+fi
+echo "✓ cargo-nextest installed"
+
+# Fetch dependencies
+echo "Fetching dependencies..."
+cargo fetch --quiet
+echo "✓ Dependencies fetched"
+
+# Build project
+echo "Building project..."
+cargo build --quiet
+echo "✓ Build successful"
+
+# Run tests
+echo "Running tests..."
+cargo nextest run --status-level=fail
+echo "✓ All tests passed"
+
+echo ""
+echo "Setup complete! You can now:"
+echo "  cargo nextest run  - Run tests"
+echo "  cargo build        - Build debug binary"
+echo "  cargo clippy       - Run linter"
+echo "  cargo run -- <cmd> - Run the CLI"

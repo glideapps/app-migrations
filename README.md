@@ -1,11 +1,15 @@
-# app-migrations
+# migrate
 
-A file system migration tool that applies ordered transformations to a project directory. Think database migrations, but for files and project setup.
+A generic file migration tool that applies ordered transformations to a project directory. Think database migrations, but for files and project setup. Migrations can be written in any language (bash, TypeScript, Python, etc.) using shebangs.
 
 ## Installation
 
 ```bash
-npm install app-migrations
+# Build from source
+cargo build --release
+
+# Or install via cargo
+cargo install --path .
 ```
 
 ## Usage
@@ -13,66 +17,132 @@ npm install app-migrations
 ### Check migration status
 
 ```bash
-app-migrate status
+migrate status
 ```
 
 ### Apply pending migrations
 
 ```bash
-app-migrate up
+migrate up
 ```
 
 ### Preview changes without applying
 
 ```bash
-app-migrate up --dry-run
+migrate up --dry-run
 ```
 
 ### Create a new migration
 
 ```bash
-app-migrate create add-prettier -d "Add Prettier configuration"
+# Create a bash migration (default)
+migrate create add-prettier
+
+# Create a TypeScript migration
+migrate create add-config --runtime ts
+
+# Create with description
+migrate create add-prettier -d "Add Prettier configuration"
+
+# List available runtimes
+migrate create --list-runtimes
 ```
 
 ## Writing Migrations
 
-Create files in your migrations directory with the pattern `NNN-name.ts`:
+Migrations are executable files that receive context via environment variables:
 
-```typescript
-// migrations/001-add-typescript.ts
-import type { ProjectDirectory } from 'app-migrations';
-import * as fs from 'node:fs/promises';
-
-export const description = 'Add TypeScript configuration';
-
-export async function up(project: ProjectDirectory): Promise<void> {
-  const tsconfig = {
-    compilerOptions: {
-      target: 'ES2022',
-      module: 'NodeNext',
-      strict: true,
-    },
-  };
-
-  await fs.writeFile(project.resolve('tsconfig.json'), JSON.stringify(tsconfig, null, 2));
-}
+```bash
+MIGRATE_PROJECT_ROOT=/path/to/project      # Absolute path to project root
+MIGRATE_MIGRATIONS_DIR=/path/to/migrations # Where migration files live
+MIGRATE_ID=001-initial-setup               # Current migration ID
+MIGRATE_DRY_RUN=true|false                 # Whether this is a dry run
 ```
 
-Migrations run in order by their numeric prefix and are tracked in a `.history` file.
+### Bash example
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+# Description: Add TypeScript configuration
+
+cd "$MIGRATE_PROJECT_ROOT"
+cat > tsconfig.json << 'EOF'
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "strict": true
+  }
+}
+EOF
+```
+
+### TypeScript example
+
+```typescript
+#!/usr/bin/env -S npx tsx
+// Description: Add configuration file
+
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
+const projectRoot = process.env.MIGRATE_PROJECT_ROOT!;
+
+const config = {
+  version: 1,
+  features: ['auth', 'api']
+};
+
+await fs.writeFile(
+  path.join(projectRoot, 'config.json'),
+  JSON.stringify(config, null, 2)
+);
+```
+
+Migrations run in order by their numeric prefix (e.g., `001-`, `002-`) and are tracked in a `.history` file.
 
 ## CLI Reference
 
 | Command                     | Description                         |
 | --------------------------- | ----------------------------------- |
-| `app-migrate status`        | Show applied and pending migrations |
-| `app-migrate up`            | Apply all pending migrations        |
-| `app-migrate create <name>` | Create a new migration file         |
+| `migrate status`            | Show applied and pending migrations |
+| `migrate up`                | Apply all pending migrations        |
+| `migrate create <name>`     | Create a new migration file         |
 
 ### Options
 
-| Option                     | Description                         | Default      |
-| -------------------------- | ----------------------------------- | ------------ |
-| `-r, --root <path>`        | Project root directory              | `.`          |
-| `-m, --migrations <path>`  | Migrations directory                | `migrations` |
-| `--dry-run`                | Preview changes (up only)           | `false`      |
-| `-d, --description <text>` | Migration description (create only) | -            |
+| Option                     | Description                           | Default      |
+| -------------------------- | ------------------------------------- | ------------ |
+| `-r, --root <path>`        | Project root directory                | `.`          |
+| `-m, --migrations <path>`  | Migrations directory                  | `migrations` |
+| `--dry-run`                | Preview changes (up only)             | `false`      |
+| `-t, --runtime <name>`     | Runtime template (create only)        | `bash`       |
+| `-d, --description <text>` | Migration description (create only)   | -            |
+| `--list-runtimes`          | List available runtimes (create only) | -            |
+
+## Available Runtimes
+
+- `bash` - Shell script (`.sh`)
+- `ts` - TypeScript via tsx (`.ts`)
+- `python` - Python 3 (`.py`)
+- `node` - Node.js (`.js`)
+
+## Development
+
+```bash
+# Clone and setup
+git clone <repo-url>
+cd migrate
+./scripts/setup     # Enable git hooks, fetch deps, build, test
+
+# Common commands
+cargo build         # Build debug binary
+cargo nextest run   # Run tests
+cargo fmt           # Format code
+cargo clippy        # Lint
+cargo run -- status # Run CLI locally
+
+# Build release
+cargo build --release
+```
