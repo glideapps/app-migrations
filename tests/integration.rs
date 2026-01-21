@@ -80,7 +80,7 @@ fn test_create_typescript_migration() {
             temp_dir.path().to_str().unwrap(),
             "create",
             "ts-migration",
-            "--runtime",
+            "--template",
             "ts",
         ])
         .output()
@@ -123,7 +123,7 @@ fn test_create_increments_prefix() {
 }
 
 #[test]
-fn test_list_runtimes() {
+fn test_list_templates() {
     let temp_dir = create_temp_dir();
 
     let output = Command::new(get_binary_path())
@@ -132,7 +132,7 @@ fn test_list_runtimes() {
             temp_dir.path().to_str().unwrap(),
             "create",
             "dummy",
-            "--list-runtimes",
+            "--list-templates",
         ])
         .output()
         .expect("Failed to execute command");
@@ -142,6 +142,7 @@ fn test_list_runtimes() {
     assert!(stdout.contains("ts"));
     assert!(stdout.contains("python"));
     assert!(stdout.contains("node"));
+    assert!(stdout.contains("ruby"));
 }
 
 #[test]

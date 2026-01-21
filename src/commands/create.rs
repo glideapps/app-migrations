@@ -12,32 +12,32 @@ pub fn run(
     project_root: &Path,
     migrations_dir: &Path,
     name: Option<&str>,
-    runtime: &str,
+    template_name: &str,
     description: Option<&str>,
-    list_runtimes: bool,
+    should_list_templates: bool,
 ) -> Result<()> {
-    // Handle --list-runtimes flag
-    if list_runtimes {
-        println!("Available runtimes:");
+    // Handle --list-templates flag
+    if should_list_templates {
+        println!("Available templates:");
         for template in list_templates() {
             println!("  {}", template);
         }
         return Ok(());
     }
 
-    // Name is required when not listing runtimes
+    // Name is required when not listing templates
     let name = match name {
         Some(n) => n,
         None => bail!("Migration name is required. Usage: migrate create <name>"),
     };
 
-    // Validate runtime
-    let template = match get_template(runtime) {
+    // Validate template
+    let template = match get_template(template_name) {
         Some(t) => t,
         None => {
             bail!(
-                "Unknown runtime '{}'. Available: {}",
-                runtime,
+                "Unknown template '{}'. Available: {}",
+                template_name,
                 list_templates().collect::<Vec<_>>().join(", ")
             );
         }

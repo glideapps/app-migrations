@@ -1,8 +1,6 @@
 {
-  "scripts": {
-    "setup": "./scripts/setup",
-    "test": "./scripts/test",
-    "build": "cargo build --release",
-    "lint": "cargo fmt --check && cargo clippy -- -D warnings"
-  }
+    "scripts": {
+        "setup": "./scripts/setup",
+        "run": "./scripts/test"
+    }
 }

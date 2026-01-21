@@ -29,6 +29,11 @@ pub static TEMPLATES: &[Template] = &[
         extension: ".js",
         content: include_str!("../templates/node.js"),
     },
+    Template {
+        name: "ruby",
+        extension: ".rb",
+        content: include_str!("../templates/ruby.rb"),
+    },
 ];
 
 /// Get a template by name

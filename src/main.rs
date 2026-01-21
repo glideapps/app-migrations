@@ -36,17 +36,17 @@ enum Commands {
         /// Migration name (e.g., "add-config")
         name: Option<String>,
 
-        /// Runtime template (bash, ts, python, node)
+        /// Template to use (bash, ts, python, node, ruby)
         #[arg(short = 't', long, default_value = "bash")]
-        runtime: String,
+        template: String,
 
         /// Migration description
         #[arg(short = 'd', long)]
         description: Option<String>,
 
-        /// List available runtimes
+        /// List available templates
         #[arg(long)]
-        list_runtimes: bool,
+        list_templates: bool,
     },
 }
 
@@ -62,17 +62,17 @@ fn main() -> Result<()> {
         }
         Commands::Create {
             name,
-            runtime,
+            template,
             description,
-            list_runtimes,
+            list_templates,
         } => {
             commands::create::run(
                 &cli.root,
                 &cli.migrations,
                 name.as_deref(),
-                &runtime,
+                &template,
                 description.as_deref(),
-                list_runtimes,
+                list_templates,
             )?;
         }
     }

@@ -9,8 +9,8 @@ migrate status                              # Show applied/pending migrations
 migrate up                                  # Apply all pending migrations
 migrate up --dry-run                        # Preview without applying
 migrate create <name>                       # Create new bash migration
-migrate create <name> --runtime ts          # Create TypeScript migration
-migrate create <name> --list-runtimes       # List available runtimes
+migrate create <name> --template ts         # Create TypeScript migration
+migrate create <name> --list-templates      # List available templates
 ```
 
 ## Options
@@ -66,7 +66,7 @@ await fs.writeFile(`${projectRoot}/config.json`, '{}');
   - `status.rs` - Status command
   - `up.rs` - Up command
   - `create.rs` - Create command
-- `templates/` - Template source files (bash.sh, typescript.ts, python.py, node.js)
+- `templates/` - Template source files (bash.sh, typescript.ts, python.py, node.js, ruby.rb)
 
 ## Development
 
