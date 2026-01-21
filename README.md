@@ -4,11 +4,25 @@ A generic file migration tool that applies ordered transformations to a project 
 
 ## Installation
 
-```bash
-# Build from source
-cargo build --release
+### Pre-built binaries (recommended)
 
-# Or install via cargo
+Using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall):
+
+```bash
+cargo binstall migrate
+```
+
+Or download directly from [GitHub Releases](https://github.com/glideapps/migrate/releases).
+
+### From source
+
+```bash
+# Install from GitHub (requires Rust: https://rustup.rs)
+cargo install --git https://github.com/glideapps/migrate
+
+# Or clone and build locally
+git clone https://github.com/glideapps/migrate
+cd migrate
 cargo install --path .
 ```
 
@@ -39,13 +53,13 @@ migrate up --dry-run
 migrate create add-prettier
 
 # Create a TypeScript migration
-migrate create add-config --runtime ts
+migrate create add-config --template ts
 
 # Create with description
 migrate create add-prettier -d "Add Prettier configuration"
 
-# List available runtimes
-migrate create --list-runtimes
+# List available templates
+migrate create --list-templates
 ```
 
 ## Writing Migrations
@@ -117,16 +131,17 @@ Migrations run in order by their numeric prefix (e.g., `001-`, `002-`) and are t
 | `-r, --root <path>`        | Project root directory                | `.`          |
 | `-m, --migrations <path>`  | Migrations directory                  | `migrations` |
 | `--dry-run`                | Preview changes (up only)             | `false`      |
-| `-t, --runtime <name>`     | Runtime template (create only)        | `bash`       |
+| `-t, --template <name>`    | Template to use (create only)         | `bash`       |
 | `-d, --description <text>` | Migration description (create only)   | -            |
-| `--list-runtimes`          | List available runtimes (create only) | -            |
+| `--list-templates`         | List available templates (create only)| -            |
 
-## Available Runtimes
+## Available Templates
 
 - `bash` - Shell script (`.sh`)
 - `ts` - TypeScript via tsx (`.ts`)
 - `python` - Python 3 (`.py`)
 - `node` - Node.js (`.js`)
+- `ruby` - Ruby (`.rb`)
 
 ## Development
 

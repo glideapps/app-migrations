@@ -65,6 +65,14 @@ Check `Cargo.toml` version against change scope:
 
 Any user-facing change requires at least a patch bump.
 
+**Important:** This crate is published to crates.io automatically. When the version in `Cargo.toml` changes on main:
+1. CI detects the version bump
+2. Creates a git tag `v<version>`
+3. Creates a GitHub Release with auto-generated changelog
+4. Publishes to crates.io
+
+To trigger a release, simply bump the version in `Cargo.toml` before merging.
+
 **Fix:** Update version in `Cargo.toml` if needed.
 
 ### 5. PR Metadata (if PR exists)
