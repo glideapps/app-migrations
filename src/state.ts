@@ -20,9 +20,12 @@ export async function readHistory(migrationsDir: string): Promise<AppliedMigrati
 
   try {
     const content = await fs.readFile(historyPath, 'utf-8');
-    const lines = content.trim().split('\n').filter(line => line.trim() && !line.startsWith('#'));
+    const lines = content
+      .trim()
+      .split('\n')
+      .filter((line) => line.trim() && !line.startsWith('#'));
 
-    return lines.map(line => {
+    return lines.map((line) => {
       const parts = line.trim().split(/\s+/);
       if (parts.length < 2) {
         throw new Error(`Invalid history line: ${line}`);
@@ -63,9 +66,9 @@ export async function getState(
   availableMigrations: LoadedMigration[]
 ): Promise<MigrationState> {
   const applied = await readHistory(migrationsDir);
-  const appliedIds = new Set(applied.map(m => m.id));
+  const appliedIds = new Set(applied.map((m) => m.id));
 
-  const pending = availableMigrations.filter(m => !appliedIds.has(m.id));
+  const pending = availableMigrations.filter((m) => !appliedIds.has(m.id));
 
   return {
     applied,

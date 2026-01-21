@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { program } from 'commander';
 import path from 'path';
-import { getMigrationState, migrate, createMigration, getDefaultMigrationsDir } from './engine.js';
+import { getMigrationState, migrate, createMigration } from './engine.js';
 
 // ANSI color codes
 const colors = {
@@ -12,21 +12,25 @@ const colors = {
   bold: (text: string) => `\x1b[1m${text}\x1b[0m`,
 };
 
-program
-  .name('app-migrate')
-  .description('File system migration tool')
-  .version('1.0.0');
+program.name('app-migrate').description('File system migration tool').version('1.0.0');
 
 /**
  * Resolve the project root and migrations directory from CLI options.
  */
-function resolvePaths(options: { root?: string; migrations?: string }): { projectRoot: string; migrationsDir: string } {
+function resolvePaths(options: { root?: string; migrations?: string }): {
+  projectRoot: string;
+  migrationsDir: string;
+} {
   const projectRoot = options.root
-    ? (path.isAbsolute(options.root) ? options.root : path.join(process.cwd(), options.root))
+    ? path.isAbsolute(options.root)
+      ? options.root
+      : path.join(process.cwd(), options.root)
     : process.cwd();
 
   const migrationsDir = options.migrations
-    ? (path.isAbsolute(options.migrations) ? options.migrations : path.join(projectRoot, options.migrations))
+    ? path.isAbsolute(options.migrations)
+      ? options.migrations
+      : path.join(projectRoot, options.migrations)
     : path.join(projectRoot, 'migrations');
 
   return { projectRoot, migrationsDir };
@@ -54,7 +58,7 @@ program
       if (state.applied.length > 0) {
         console.log(colors.bold('Applied:'));
         for (const applied of state.applied) {
-          const migration = state.available.find(m => m.id === applied.id);
+          const migration = state.available.find((m) => m.id === applied.id);
           const description = migration?.module.description ?? '';
           console.log(`  ${colors.green('✓')} ${applied.id} ${colors.gray(description)}`);
           console.log(`    ${colors.gray(`Applied: ${applied.appliedAt}`)}`);
@@ -120,8 +124,8 @@ program
 
       console.log();
 
-      const successful = results.filter(r => r.success).length;
-      const failed = results.filter(r => !r.success).length;
+      const successful = results.filter((r) => r.success).length;
+      const failed = results.filter((r) => !r.success).length;
 
       if (options.dryRun) {
         console.log(colors.gray(`${successful} migration(s) would be applied`));

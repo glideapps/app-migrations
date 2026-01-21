@@ -20,10 +20,7 @@ export async function up(project: ProjectDirectory) {
     },
   };
 
-  await fs.writeFile(
-    project.resolve('.eslintrc.json'),
-    JSON.stringify(eslintConfig, null, 2)
-  );
+  await fs.writeFile(project.resolve('.eslintrc.json'), JSON.stringify(eslintConfig, null, 2));
 
   // Update package.json to add ESLint
   const pkgPath = project.resolve('package.json');

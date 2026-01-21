@@ -17,10 +17,7 @@ export async function up(project: ProjectDirectory) {
     include: ['src/**/*'],
   };
 
-  await fs.writeFile(
-    project.resolve('tsconfig.json'),
-    JSON.stringify(tsconfig, null, 2)
-  );
+  await fs.writeFile(project.resolve('tsconfig.json'), JSON.stringify(tsconfig, null, 2));
 
   // Update package.json to add TypeScript dev dependency
   const pkgPath = project.resolve('package.json');

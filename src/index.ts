@@ -22,4 +22,9 @@ export { getMigrationState, migrate, createMigration, getDefaultMigrationsDir } 
 export { readHistory, appendHistory, getState, getHistoryPath } from './state.js';
 
 // Loader functions (for advanced use cases)
-export { loadMigrations, loadMigrationFile, discoverMigrations, listMigrationFiles } from './loader.js';
+export {
+  loadMigrations,
+  loadMigrationFile,
+  discoverMigrations,
+  listMigrationFiles,
+} from './loader.js';
