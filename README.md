@@ -2,28 +2,37 @@
 
 A generic file migration tool that applies ordered transformations to a project directory. Think database migrations, but for files and project setup. Migrations can be written in any language (bash, TypeScript, Python, etc.) using shebangs.
 
-## Installation
+## Install
 
-### Pre-built binaries (recommended)
+### Option 1: Download binary (easiest)
 
-Using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall):
+Download the pre-built binary for your platform from [GitHub Releases](https://github.com/glideapps/migrate/releases), then move it to a directory in your PATH:
 
 ```bash
+# Example for macOS (Apple Silicon)
+curl -L https://github.com/glideapps/migrate/releases/latest/download/migrate-aarch64-apple-darwin -o migrate
+chmod +x migrate
+sudo mv migrate /usr/local/bin/
+```
+
+### Option 2: cargo-binstall (recommended if you have Rust)
+
+If you have Rust installed, [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) downloads pre-built binaries:
+
+```bash
+# Install cargo-binstall first (if you don't have it)
+cargo install cargo-binstall
+
+# Then install migrate
 cargo binstall migrate
 ```
 
-Or download directly from [GitHub Releases](https://github.com/glideapps/migrate/releases).
+### Option 3: Build from source
 
-### From source
+Requires [Rust](https://rustup.rs):
 
 ```bash
-# Install from GitHub (requires Rust: https://rustup.rs)
 cargo install --git https://github.com/glideapps/migrate
-
-# Or clone and build locally
-git clone https://github.com/glideapps/migrate
-cd migrate
-cargo install --path .
 ```
 
 ## Usage
