@@ -3,6 +3,7 @@ pub mod executor;
 pub mod loader;
 pub mod state;
 pub mod templates;
+pub mod version;
 
 use chrono::{DateTime, Utc};
 use std::path::PathBuf;
@@ -10,10 +11,10 @@ use std::path::PathBuf;
 /// Metadata for a discovered migration file
 #[derive(Debug, Clone)]
 pub struct Migration {
-    /// Migration ID (e.g., "001-init")
+    /// Migration ID (e.g., "1f72f-init")
     pub id: String,
-    /// Numeric prefix (e.g., 1)
-    pub prefix: u32,
+    /// Version string (e.g., "1f72f")
+    pub version: String,
     /// Absolute path to the migration file
     pub file_path: PathBuf,
 }

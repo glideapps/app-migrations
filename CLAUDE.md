@@ -22,14 +22,20 @@ All commands accept:
 
 ## Migration Format
 
-Files: `NNN-name.{sh,ts,py,js,...}` (e.g., `001-add-config.sh`)
+Files: `XXXXX-name.{sh,ts,py,js,...}` where XXXXX is a 5-character base36 version.
+
+**Version format:** `DDDMM` where:
+- `DDD` = days since 2020-01-01 in base36 (~127 years of runway)
+- `MM` = 10-minute slot of the day in base36 (144 slots/day)
+
+Example: `1fb2g-add-config.sh` (created on day 1843 at slot 88 = ~14:40)
 
 Migrations are executable files that receive context via environment variables:
 
 ```bash
 MIGRATE_PROJECT_ROOT=/path/to/project      # Absolute path to project root
 MIGRATE_MIGRATIONS_DIR=/path/to/migrations # Where migration files live
-MIGRATE_ID=001-initial-setup               # Current migration ID
+MIGRATE_ID=1fb2g-initial-setup             # Current migration ID (includes version)
 MIGRATE_DRY_RUN=true|false                 # Whether this is a dry run
 ```
 
@@ -60,12 +66,13 @@ await fs.writeFile(`${projectRoot}/config.json`, '{}');
 - `src/loader.rs` - Migration discovery
 - `src/executor.rs` - Subprocess execution
 - `src/state.rs` - History tracking (`.history` file)
+- `src/version.rs` - Base36 version generation and parsing
 - `src/templates.rs` - Embedded migration templates
 - `src/commands/` - CLI command implementations
   - `mod.rs` - Command module exports
-  - `status.rs` - Status command
+  - `status.rs` - Status command (shows version summary)
   - `up.rs` - Up command
-  - `create.rs` - Create command
+  - `create.rs` - Create command (generates time-based version)
 - `templates/` - Template source files (bash.sh, typescript.ts, python.py, node.js, ruby.rb)
 
 ## Development

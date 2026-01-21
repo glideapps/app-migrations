@@ -2,7 +2,7 @@ use anyhow::Result;
 use std::path::Path;
 
 use crate::loader::discover_migrations;
-use crate::state::{get_pending, read_history};
+use crate::state::{get_current_version, get_pending, get_target_version, read_history};
 
 /// Show the status of all migrations
 pub fn run(project_root: &Path, migrations_dir: &Path) -> Result<()> {
@@ -29,8 +29,31 @@ pub fn run(project_root: &Path, migrations_dir: &Path) -> Result<()> {
         return Ok(());
     }
 
+    let current_version = get_current_version(&available, &applied);
+    let target_version = get_target_version(&available);
+
     println!("Migration Status");
     println!("================");
+    println!();
+
+    // Show version summary line
+    match (&current_version, &target_version) {
+        (None, Some(target)) => {
+            println!("Version: (none) -> {} ({} pending)", target, pending.len());
+        }
+        (Some(current), Some(target)) if current == target => {
+            println!("Version: {} (up to date)", current);
+        }
+        (Some(current), Some(target)) => {
+            println!(
+                "Version: {} -> {} ({} pending)",
+                current,
+                target,
+                pending.len()
+            );
+        }
+        _ => {}
+    }
     println!();
 
     // Show applied migrations
@@ -38,7 +61,7 @@ pub fn run(project_root: &Path, migrations_dir: &Path) -> Result<()> {
         println!("Applied ({}):", applied.len());
         for migration in &applied {
             println!(
-                "  [x] {} ({})",
+                "  + {}  {}",
                 migration.id,
                 migration.applied_at.format("%Y-%m-%d %H:%M:%S")
             );
@@ -50,10 +73,8 @@ pub fn run(project_root: &Path, migrations_dir: &Path) -> Result<()> {
     if !pending.is_empty() {
         println!("Pending ({}):", pending.len());
         for migration in &pending {
-            println!("  [ ] {}", migration.id);
+            println!("  - {}", migration.id);
         }
-    } else {
-        println!("All migrations have been applied.");
     }
 
     Ok(())

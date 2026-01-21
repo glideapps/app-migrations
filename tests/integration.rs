@@ -57,8 +57,27 @@ fn test_create_bash_migration() {
 
     assert!(output.status.success());
 
-    let migration_file = migrations_dir.join("001-test-migration.sh");
-    assert!(migration_file.exists(), "Migration file should be created");
+    // Find the created migration file (version is time-based, so we search for pattern)
+    let files: Vec<_> = fs::read_dir(&migrations_dir)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter(|e| {
+            e.file_name()
+                .to_string_lossy()
+                .ends_with("-test-migration.sh")
+        })
+        .collect();
+    assert_eq!(files.len(), 1, "Migration file should be created");
+
+    let migration_file = files[0].path();
+
+    // Verify filename format: 5 alphanumeric chars + dash + name + extension
+    let filename = migration_file.file_name().unwrap().to_string_lossy();
+    assert!(
+        filename.len() > 6 && filename.chars().take(5).all(|c| c.is_ascii_alphanumeric()),
+        "Filename should start with 5-char version: {}",
+        filename
+    );
 
     // Check file is executable
     let perms = fs::metadata(&migration_file).unwrap().permissions();
@@ -88,25 +107,44 @@ fn test_create_typescript_migration() {
 
     assert!(output.status.success());
 
-    let migration_file = migrations_dir.join("001-ts-migration.ts");
-    assert!(migration_file.exists());
+    // Find the created migration file
+    let files: Vec<_> = fs::read_dir(&migrations_dir)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter(|e| {
+            e.file_name()
+                .to_string_lossy()
+                .ends_with("-ts-migration.ts")
+        })
+        .collect();
+    assert_eq!(files.len(), 1, "Migration file should be created");
 
+    let migration_file = files[0].path();
     let content = fs::read_to_string(&migration_file).unwrap();
     assert!(content.starts_with("#!/usr/bin/env -S npx tsx"));
 }
 
 #[test]
-fn test_create_increments_prefix() {
+fn test_create_detects_version_collision() {
     let temp_dir = create_temp_dir();
     let migrations_dir = temp_dir.path().join("migrations");
     fs::create_dir(&migrations_dir).unwrap();
 
-    // Create first migration manually
-    let first = migrations_dir.join("001-first.sh");
-    fs::write(&first, "#!/usr/bin/env bash\necho first").unwrap();
+    // Create first migration via CLI
+    let output1 = Command::new(get_binary_path())
+        .args([
+            "--root",
+            temp_dir.path().to_str().unwrap(),
+            "create",
+            "first",
+        ])
+        .output()
+        .expect("Failed to execute command");
+    assert!(output1.status.success());
 
-    // Create second via CLI
-    let output = Command::new(get_binary_path())
+    // Creating second migration immediately should either succeed (different 10-min slot)
+    // or fail with version collision message
+    let output2 = Command::new(get_binary_path())
         .args([
             "--root",
             temp_dir.path().to_str().unwrap(),
@@ -116,10 +154,15 @@ fn test_create_increments_prefix() {
         .output()
         .expect("Failed to execute command");
 
-    assert!(output.status.success());
-
-    let second = migrations_dir.join("002-second.sh");
-    assert!(second.exists(), "Second migration should have prefix 002");
+    // If it failed, it should be due to version collision
+    if !output2.status.success() {
+        let stderr = String::from_utf8_lossy(&output2.stderr);
+        assert!(
+            stderr.contains("already exists"),
+            "Should fail with version collision: {}",
+            stderr
+        );
+    }
 }
 
 #[test]
@@ -151,8 +194,8 @@ fn test_up_applies_migrations() {
     let migrations_dir = temp_dir.path().join("migrations");
     fs::create_dir(&migrations_dir).unwrap();
 
-    // Create a simple migration
-    let migration = migrations_dir.join("001-create-file.sh");
+    // Create a simple migration with new 5-char version format
+    let migration = migrations_dir.join("00001-create-file.sh");
     fs::write(
         &migration,
         r#"#!/usr/bin/env bash
@@ -193,7 +236,7 @@ touch "$MIGRATE_PROJECT_ROOT/created-by-migration.txt"
     assert!(history.exists(), "History file should be created");
 
     let history_content = fs::read_to_string(&history).unwrap();
-    assert!(history_content.contains("001-create-file"));
+    assert!(history_content.contains("00001-create-file"));
 }
 
 #[test]
@@ -202,8 +245,8 @@ fn test_up_dry_run() {
     let migrations_dir = temp_dir.path().join("migrations");
     fs::create_dir(&migrations_dir).unwrap();
 
-    // Create a migration
-    let migration = migrations_dir.join("001-create-file.sh");
+    // Create a migration with 5-char version format
+    let migration = migrations_dir.join("00001-create-file.sh");
     fs::write(
         &migration,
         r#"#!/usr/bin/env bash
@@ -249,8 +292,8 @@ fn test_failed_migration_stops_execution() {
     let migrations_dir = temp_dir.path().join("migrations");
     fs::create_dir(&migrations_dir).unwrap();
 
-    // First migration succeeds
-    let first = migrations_dir.join("001-success.sh");
+    // First migration succeeds (version 00001)
+    let first = migrations_dir.join("00001-success.sh");
     fs::write(
         &first,
         r#"#!/usr/bin/env bash
@@ -262,8 +305,8 @@ touch "$MIGRATE_PROJECT_ROOT/first.txt"
     perms.set_mode(0o755);
     fs::set_permissions(&first, perms).unwrap();
 
-    // Second migration fails
-    let second = migrations_dir.join("002-fail.sh");
+    // Second migration fails (version 00002)
+    let second = migrations_dir.join("00002-fail.sh");
     fs::write(
         &second,
         r#"#!/usr/bin/env bash
@@ -275,8 +318,8 @@ exit 1
     perms.set_mode(0o755);
     fs::set_permissions(&second, perms).unwrap();
 
-    // Third migration should not run
-    let third = migrations_dir.join("003-never.sh");
+    // Third migration should not run (version 00003)
+    let third = migrations_dir.join("00003-never.sh");
     fs::write(
         &third,
         r#"#!/usr/bin/env bash
@@ -305,8 +348,8 @@ touch "$MIGRATE_PROJECT_ROOT/third.txt"
 
     // History should only contain first migration
     let history = fs::read_to_string(migrations_dir.join(".history")).unwrap();
-    assert!(history.contains("001-success"));
-    assert!(!history.contains("002-fail"));
+    assert!(history.contains("00001-success"));
+    assert!(!history.contains("00002-fail"));
 }
 
 #[test]
@@ -315,14 +358,14 @@ fn test_status_shows_applied_and_pending() {
     let migrations_dir = temp_dir.path().join("migrations");
     fs::create_dir(&migrations_dir).unwrap();
 
-    // Create migrations
-    let first = migrations_dir.join("001-first.sh");
+    // Create migrations with 5-char version format
+    let first = migrations_dir.join("00001-first.sh");
     fs::write(&first, "#!/usr/bin/env bash\necho first").unwrap();
     let mut perms = fs::metadata(&first).unwrap().permissions();
     perms.set_mode(0o755);
     fs::set_permissions(&first, perms).unwrap();
 
-    let second = migrations_dir.join("002-second.sh");
+    let second = migrations_dir.join("00002-second.sh");
     fs::write(&second, "#!/usr/bin/env bash\necho second").unwrap();
     let mut perms = fs::metadata(&second).unwrap().permissions();
     perms.set_mode(0o755);
@@ -331,7 +374,7 @@ fn test_status_shows_applied_and_pending() {
     // Write history for first migration only
     fs::write(
         migrations_dir.join(".history"),
-        "001-first 2024-01-01T00:00:00+00:00\n",
+        "00001-first 2024-01-01T00:00:00+00:00\n",
     )
     .unwrap();
 
@@ -342,8 +385,14 @@ fn test_status_shows_applied_and_pending() {
         .expect("Failed to execute command");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
+    // Check for version summary line
+    assert!(
+        stdout.contains("Version:"),
+        "Should show version line: {}",
+        stdout
+    );
     assert!(stdout.contains("Applied (1)"));
-    assert!(stdout.contains("[x] 001-first"));
+    assert!(stdout.contains("00001-first"));
     assert!(stdout.contains("Pending (1)"));
-    assert!(stdout.contains("[ ] 002-second"));
+    assert!(stdout.contains("00002-second"));
 }

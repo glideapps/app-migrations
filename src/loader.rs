@@ -2,12 +2,14 @@ use anyhow::{Context, Result};
 use glob::glob;
 use std::path::Path;
 
+use crate::version::is_valid_version;
 use crate::Migration;
 
 /// Discover all migrations in the given directory.
-/// Migrations must match the pattern NNN-name.ext (e.g., 001-init.sh)
+/// Migrations must match the pattern XXXXX-name.ext where XXXXX is a 5-char base36 version
 pub fn discover_migrations(dir: &Path) -> Result<Vec<Migration>> {
-    let pattern = dir.join("[0-9][0-9][0-9]-*");
+    // Match 5 alphanumeric characters followed by dash
+    let pattern = dir.join("[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z]-*");
     let pattern_str = pattern
         .to_str()
         .context("Invalid path for migration directory")?;
@@ -18,33 +20,42 @@ pub fn discover_migrations(dir: &Path) -> Result<Vec<Migration>> {
         .filter(|path| path.is_file())
         .filter_map(|path| {
             let filename = path.file_name()?.to_str()?;
-            let prefix = extract_prefix(filename)?;
+            let version = extract_version(filename)?;
             let id = extract_id(filename);
             Some(Migration {
                 id,
-                prefix,
+                version,
                 file_path: path,
             })
         })
         .collect();
 
-    // Sort by prefix to ensure correct execution order
-    migrations.sort_by_key(|m| m.prefix);
+    // Sort by version string (lexicographic sort works for base36)
+    migrations.sort_by(|a, b| a.version.cmp(&b.version));
 
     Ok(migrations)
 }
 
-/// Extract the numeric prefix from a migration filename.
-/// Returns None if the filename doesn't start with 3 digits.
-pub fn extract_prefix(filename: &str) -> Option<u32> {
-    if filename.len() < 3 {
+/// Extract the version from a migration filename.
+/// Returns None if the filename doesn't start with a valid 5-char version.
+pub fn extract_version(filename: &str) -> Option<String> {
+    if filename.len() < 6 {
         return None;
     }
-    filename[..3].parse().ok()
+    // Must have dash after 5-char version
+    if filename.as_bytes().get(5) != Some(&b'-') {
+        return None;
+    }
+    let version = &filename[..5];
+    if is_valid_version(version) {
+        Some(version.to_string())
+    } else {
+        None
+    }
 }
 
 /// Extract the migration ID from a filename.
-/// The ID is the filename without extension (e.g., "001-init" from "001-init.sh")
+/// The ID is the filename without extension (e.g., "1f72f-init" from "1f72f-init.sh")
 pub fn extract_id(filename: &str) -> String {
     // Remove extension if present
     match filename.rfind('.') {
@@ -58,18 +69,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_extract_prefix() {
-        assert_eq!(extract_prefix("001-init.sh"), Some(1));
-        assert_eq!(extract_prefix("123-something.ts"), Some(123));
-        assert_eq!(extract_prefix("999-last.py"), Some(999));
-        assert_eq!(extract_prefix("ab-invalid.sh"), None);
-        assert_eq!(extract_prefix("1-short.sh"), None);
+    fn test_extract_version() {
+        assert_eq!(extract_version("1f72f-init.sh"), Some("1f72f".to_string()));
+        assert_eq!(
+            extract_version("00000-something.ts"),
+            Some("00000".to_string())
+        );
+        assert_eq!(extract_version("zzzzz-last.py"), Some("zzzzz".to_string()));
+        assert_eq!(extract_version("ab-invalid.sh"), None); // Too short
+        assert_eq!(extract_version("1234-short.sh"), None); // 4 chars, not 5
+        assert_eq!(extract_version("123456-toolong.sh"), None); // No dash at position 5
     }
 
     #[test]
     fn test_extract_id() {
-        assert_eq!(extract_id("001-init.sh"), "001-init");
-        assert_eq!(extract_id("002-add-config.ts"), "002-add-config");
-        assert_eq!(extract_id("003-no-extension"), "003-no-extension");
+        assert_eq!(extract_id("1f72f-init.sh"), "1f72f-init");
+        assert_eq!(extract_id("00000-add-config.ts"), "00000-add-config");
+        assert_eq!(extract_id("zzzzz-no-extension"), "zzzzz-no-extension");
     }
 }

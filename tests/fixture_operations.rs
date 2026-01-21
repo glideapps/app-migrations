@@ -83,7 +83,7 @@ fn test_migration_overwrites_file() {
 
     create_migration(
         temp_dir.path(),
-        "001-overwrite-readme.sh",
+        "00001-overwrite-readme.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
@@ -115,7 +115,7 @@ fn test_migration_edits_file_with_sed() {
 
     create_migration(
         temp_dir.path(),
-        "001-edit-main.sh",
+        "00001-edit-main.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
@@ -145,7 +145,7 @@ fn test_migration_modifies_json_with_jq() {
 
     create_migration(
         temp_dir.path(),
-        "001-update-config.sh",
+        "00001-update-config.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
@@ -184,7 +184,7 @@ fn test_migration_creates_directory_and_files() {
 
     create_migration(
         temp_dir.path(),
-        "001-create-tests.sh",
+        "00001-create-tests.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
@@ -232,7 +232,7 @@ fn test_migration_deletes_file() {
 
     create_migration(
         temp_dir.path(),
-        "001-delete-users.sh",
+        "00001-delete-users.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
@@ -257,7 +257,7 @@ fn test_migration_renames_file() {
 
     create_migration(
         temp_dir.path(),
-        "001-rename-config.sh",
+        "00001-rename-config.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
@@ -287,7 +287,7 @@ fn test_migration_appends_to_file() {
 
     create_migration(
         temp_dir.path(),
-        "001-append-csv.sh",
+        "00001-append-csv.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
@@ -317,7 +317,7 @@ fn test_multiple_migrations_in_sequence() {
     // First migration: update version
     create_migration(
         temp_dir.path(),
-        "001-bump-version.sh",
+        "00001-bump-version.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
@@ -330,7 +330,7 @@ mv config.json.tmp config.json
     // Second migration: add feature flag
     create_migration(
         temp_dir.path(),
-        "002-add-feature.sh",
+        "00002-add-feature.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
@@ -343,7 +343,7 @@ mv config.json.tmp config.json
     // Third migration: create changelog
     create_migration(
         temp_dir.path(),
-        "003-create-changelog.sh",
+        "00003-create-changelog.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
@@ -373,9 +373,9 @@ EOF
 
     // Verify history contains all migrations
     let history = fs::read_to_string(temp_dir.path().join("migrations/.history")).unwrap();
-    assert!(history.contains("001-bump-version"));
-    assert!(history.contains("002-add-feature"));
-    assert!(history.contains("003-create-changelog"));
+    assert!(history.contains("00001-bump-version"));
+    assert!(history.contains("00002-add-feature"));
+    assert!(history.contains("00003-create-changelog"));
 }
 
 // =============================================================================
@@ -388,7 +388,7 @@ fn test_typescript_migration_modifies_files() {
 
     create_migration(
         temp_dir.path(),
-        "001-ts-update-config.ts",
+        "00001-ts-update-config.ts",
         r#"#!/usr/bin/env -S npx tsx
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -439,7 +439,7 @@ fn test_dry_run_preserves_fixture() {
 
     create_migration(
         temp_dir.path(),
-        "001-destructive.sh",
+        "00001-destructive.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 cd "$MIGRATE_PROJECT_ROOT"
@@ -482,7 +482,7 @@ fn test_migration_receives_environment_variables() {
 
     create_migration(
         temp_dir.path(),
-        "001-check-env.sh",
+        "00001-check-env.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 
@@ -503,7 +503,7 @@ EOF
 
     assert!(env_content.contains("PROJECT_ROOT="));
     assert!(env_content.contains("MIGRATIONS_DIR="));
-    assert!(env_content.contains("MIGRATION_ID=001-check-env"));
+    assert!(env_content.contains("MIGRATION_ID=00001-check-env"));
     assert!(env_content.contains("DRY_RUN=false"));
 }
 
@@ -518,7 +518,7 @@ fn test_typescript_ast_removes_deprecated_functions() {
     // Migration that uses ts-morph to remove deprecated functions via AST
     create_migration(
         temp_dir.path(),
-        "001-remove-deprecated.ts",
+        "00001-remove-deprecated.ts",
         r#"#!/usr/bin/env -S npx tsx
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -591,7 +591,7 @@ fn test_bash_runtime_migration() {
 
     create_migration(
         temp_dir.path(),
-        "001-bash-test.sh",
+        "00001-bash-test.sh",
         r#"#!/usr/bin/env bash
 set -euo pipefail
 # Description: Test bash runtime
@@ -640,7 +640,7 @@ fn test_typescript_runtime_migration() {
 
     create_migration(
         temp_dir.path(),
-        "001-typescript-test.ts",
+        "00001-typescript-test.ts",
         r#"#!/usr/bin/env -S npx tsx
 // Description: Test TypeScript runtime
 
@@ -715,7 +715,7 @@ fn test_python_runtime_migration() {
 
     create_migration(
         temp_dir.path(),
-        "001-python-test.py",
+        "00001-python-test.py",
         r#"#!/usr/bin/env python3
 # Description: Test Python runtime
 
@@ -789,7 +789,7 @@ fn test_node_runtime_migration() {
 
     create_migration(
         temp_dir.path(),
-        "001-node-test.js",
+        "00001-node-test.js",
         r#"#!/usr/bin/env node
 // Description: Test Node.js runtime
 
@@ -863,7 +863,7 @@ fn test_ruby_runtime_migration() {
 
     create_migration(
         temp_dir.path(),
-        "001-ruby-test.rb",
+        "00001-ruby-test.rb",
         r#"#!/usr/bin/env ruby
 # Description: Test Ruby runtime
 

@@ -6,6 +6,7 @@ use std::path::Path;
 
 use crate::loader::discover_migrations;
 use crate::templates::{get_template, list_templates};
+use crate::version::generate_version;
 
 /// Create a new migration file
 pub fn run(
@@ -52,12 +53,20 @@ pub fn run(
     // Create migrations directory if it doesn't exist
     fs::create_dir_all(&migrations_path)?;
 
-    // Determine next prefix
+    // Generate version from current time
+    let version = generate_version();
+
+    // Check for version collision with existing migrations
     let existing = discover_migrations(&migrations_path).unwrap_or_default();
-    let next_prefix = existing.iter().map(|m| m.prefix).max().unwrap_or(0) + 1;
+    if existing.iter().any(|m| m.version == version) {
+        bail!(
+            "A migration with version {} already exists. Wait a few minutes or use a different time slot.",
+            version
+        );
+    }
 
     // Build filename
-    let filename = format!("{:03}-{}{}", next_prefix, name, template.extension);
+    let filename = format!("{}-{}{}", version, name, template.extension);
     let file_path = migrations_path.join(&filename);
 
     // Check if file already exists
