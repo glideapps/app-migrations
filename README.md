@@ -4,11 +4,25 @@ A generic file migration tool that applies ordered transformations to a project 
 
 ## Installation
 
-```bash
-# Install from crates.io
-cargo install migrate
+### Pre-built binaries (recommended)
 
-# Or build from source
+Using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall):
+
+```bash
+cargo binstall migrate
+```
+
+Or download directly from [GitHub Releases](https://github.com/glideapps/migrate/releases).
+
+### From source
+
+```bash
+# Install from GitHub (requires Rust: https://rustup.rs)
+cargo install --git https://github.com/glideapps/migrate
+
+# Or clone and build locally
+git clone https://github.com/glideapps/migrate
+cd migrate
 cargo install --path .
 ```
 
