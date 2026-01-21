@@ -1,6 +1,6 @@
 {
   "name": "app-migrations",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "A file system transformation library that applies ordered migrations to transform a file tree",
   "type": "module",
   "main": "./dist/index.js",
