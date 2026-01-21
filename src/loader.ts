@@ -4,9 +4,14 @@ import { pathToFileURL } from 'url';
 import type { LoadedMigration, Migration } from './types.js';
 
 /**
- * Pattern for migration filenames: prefix-name.ts (e.g., 001-initial-setup.ts)
+ * Supported migration file extensions (in order of precedence).
  */
-const MIGRATION_PATTERN = /^(\d+)-(.+)\.ts$/;
+const SUPPORTED_EXTENSIONS = ['.ts', '.mjs', '.js'];
+
+/**
+ * Pattern for migration filenames: prefix-name.ext (e.g., 001-initial-setup.ts)
+ */
+const MIGRATION_PATTERN = /^(\d+)-(.+)\.(ts|mjs|js)$/;
 
 /**
  * Extract the numeric prefix from a migration filename.
@@ -22,7 +27,12 @@ export function extractPrefix(filename: string): number | null {
  * Extract the migration ID from a filename (filename without extension).
  */
 export function extractId(filename: string): string {
-  return path.basename(filename, '.ts');
+  for (const ext of SUPPORTED_EXTENSIONS) {
+    if (filename.endsWith(ext)) {
+      return path.basename(filename, ext);
+    }
+  }
+  return path.basename(filename);
 }
 
 /**
@@ -30,7 +40,7 @@ export function extractId(filename: string): string {
  * Returns files sorted by their numeric prefix.
  */
 export async function discoverMigrations(migrationsDir: string): Promise<string[]> {
-  const pattern = path.join(migrationsDir, '[0-9]*-*.ts');
+  const pattern = path.join(migrationsDir, '[0-9]*-*.{ts,mjs,js}');
   const files = await glob(pattern, { absolute: true });
 
   // Filter to only files matching the expected pattern and sort by prefix
@@ -54,7 +64,9 @@ export async function loadMigrationFile(filePath: string): Promise<LoadedMigrati
   const prefix = extractPrefix(filename);
 
   if (prefix === null) {
-    throw new Error(`Invalid migration filename: ${filename}. Expected format: NNN-name.ts`);
+    throw new Error(
+      `Invalid migration filename: ${filename}. Expected format: NNN-name.{ts,mjs,js}`
+    );
   }
 
   const id = extractId(filename);

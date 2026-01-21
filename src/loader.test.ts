@@ -31,10 +31,16 @@ describe('loader', () => {
       expect(extractPrefix('100-big-change.ts')).toBe(100);
     });
 
+    it('supports multiple file extensions', () => {
+      expect(extractPrefix('001-setup.ts')).toBe(1);
+      expect(extractPrefix('001-setup.mjs')).toBe(1);
+      expect(extractPrefix('001-setup.js')).toBe(1);
+    });
+
     it('returns null for invalid filenames', () => {
       expect(extractPrefix('initial-setup.ts')).toBeNull();
       expect(extractPrefix('001.ts')).toBeNull();
-      expect(extractPrefix('001-setup.js')).toBeNull();
+      expect(extractPrefix('001-setup.txt')).toBeNull();
       expect(extractPrefix('abc-setup.ts')).toBeNull();
     });
   });
@@ -43,6 +49,12 @@ describe('loader', () => {
     it('extracts id from filename', () => {
       expect(extractId('001-initial-setup.ts')).toBe('001-initial-setup');
       expect(extractId('042-add-feature.ts')).toBe('042-add-feature');
+    });
+
+    it('handles all supported extensions', () => {
+      expect(extractId('001-setup.ts')).toBe('001-setup');
+      expect(extractId('001-setup.mjs')).toBe('001-setup');
+      expect(extractId('001-setup.js')).toBe('001-setup');
     });
   });
 

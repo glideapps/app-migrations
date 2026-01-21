@@ -46,4 +46,5 @@ export async function up(project: ProjectDirectory): Promise<void> {
 npm test          # Run tests
 npm run build     # Build
 npm run lint      # Lint
+npm run format    # Format code with Prettier
 ```

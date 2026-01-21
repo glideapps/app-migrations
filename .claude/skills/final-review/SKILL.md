@@ -33,7 +33,12 @@ npm run build && npm run lint && npm run format:check && npm test
 
 This matches the CI pipeline defined in `.github/workflows/ci.yml`.
 
-**Fix:** Resolve type errors, lint errors, format issues. Use `npm run lint:fix` and `npm run format` to auto-fix. Re-run until zero errors.
+**Fix:** Resolve type errors, lint errors, format issues:
+
+- `npm run lint:fix` - auto-fix lint errors
+- `npm run format` - auto-fix formatting issues
+
+Re-run the verification commands until zero errors.
 
 ### 3. Documentation Consistency
 
