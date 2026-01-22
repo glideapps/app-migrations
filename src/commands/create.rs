@@ -1,8 +1,10 @@
 use anyhow::{bail, Result};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
-use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
+
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 
 use crate::loader::discover_migrations;
 use crate::templates::{get_template, list_templates};
@@ -89,10 +91,13 @@ pub fn run(
 
     file.write_all(content.as_bytes())?;
 
-    // Make executable (chmod +x)
-    let mut perms = fs::metadata(&file_path)?.permissions();
-    perms.set_mode(0o755);
-    fs::set_permissions(&file_path, perms)?;
+    // Make executable (chmod +x) - only on Unix
+    #[cfg(unix)]
+    {
+        let mut perms = fs::metadata(&file_path)?.permissions();
+        perms.set_mode(0o755);
+        fs::set_permissions(&file_path, perms)?;
+    }
 
     println!("Created migration: {}", file_path.display());
 
