@@ -2,13 +2,20 @@ use anyhow::Result;
 use chrono::Utc;
 use std::path::Path;
 
+use crate::baseline::{delete_baselined_migrations, read_baseline, write_baseline, Baseline};
 use crate::executor::execute;
 use crate::loader::discover_migrations;
 use crate::state::{append_history, get_pending, read_history};
 use crate::ExecutionContext;
 
 /// Apply all pending migrations
-pub fn run(project_root: &Path, migrations_dir: &Path, dry_run: bool) -> Result<()> {
+pub fn run(
+    project_root: &Path,
+    migrations_dir: &Path,
+    dry_run: bool,
+    create_baseline: bool,
+    keep: bool,
+) -> Result<()> {
     let project_root = if project_root.is_absolute() {
         project_root.to_path_buf()
     } else {
@@ -31,7 +38,8 @@ pub fn run(project_root: &Path, migrations_dir: &Path, dry_run: bool) -> Result<
 
     let available = discover_migrations(&migrations_path)?;
     let applied = read_history(&migrations_path)?;
-    let pending = get_pending(&available, &applied);
+    let baseline = read_baseline(&migrations_path)?;
+    let pending = get_pending(&available, &applied, baseline.as_ref());
 
     if pending.is_empty() {
         println!("No pending migrations.");
@@ -45,11 +53,14 @@ pub fn run(project_root: &Path, migrations_dir: &Path, dry_run: bool) -> Result<
     );
     println!();
 
-    for migration in pending {
+    let mut last_applied_version: Option<String> = None;
+
+    for migration in &pending {
         println!("→ {}", migration.id);
 
         if dry_run {
             println!("  (dry run - skipped)");
+            last_applied_version = Some(migration.version.clone());
             continue;
         }
 
@@ -65,6 +76,7 @@ pub fn run(project_root: &Path, migrations_dir: &Path, dry_run: bool) -> Result<
         if result.success {
             let applied_at = Utc::now();
             append_history(&migrations_path, &migration.id, applied_at)?;
+            last_applied_version = Some(migration.version.clone());
             println!("  ✓ completed");
         } else {
             println!("  ✗ failed (exit code {})", result.exit_code);
@@ -81,6 +93,41 @@ pub fn run(project_root: &Path, migrations_dir: &Path, dry_run: bool) -> Result<
 
     println!();
     println!("All migrations applied successfully.");
+
+    // Handle --baseline flag
+    if create_baseline {
+        if let Some(version) = last_applied_version {
+            println!();
+            if dry_run {
+                println!("Would create baseline at version '{}'", version);
+                if !keep {
+                    let to_delete: Vec<_> = available
+                        .iter()
+                        .filter(|m| m.version.as_str() <= version.as_str())
+                        .collect();
+                    if !to_delete.is_empty() {
+                        println!("Would delete {} migration file(s)", to_delete.len());
+                    }
+                }
+            } else {
+                let new_baseline = Baseline {
+                    version: version.clone(),
+                    created: Utc::now(),
+                    summary: None,
+                };
+
+                write_baseline(&migrations_path, &new_baseline)?;
+                println!("Created baseline at version '{}'", version);
+
+                if !keep {
+                    let deleted = delete_baselined_migrations(&version, &available)?;
+                    if !deleted.is_empty() {
+                        println!("Deleted {} migration file(s)", deleted.len());
+                    }
+                }
+            }
+        }
+    }
 
     Ok(())
 }

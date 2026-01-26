@@ -4,6 +4,7 @@ use std::fs::{self, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 
+use crate::baseline::Baseline;
 use crate::{AppliedMigration, Migration};
 
 const HISTORY_FILE: &str = ".history";
@@ -64,16 +65,30 @@ pub fn append_history(migrations_dir: &Path, id: &str, applied_at: DateTime<Utc>
 }
 
 /// Get pending migrations (available but not yet applied).
+/// If a baseline is provided, skip migrations at or before the baseline version.
 pub fn get_pending<'a>(
     available: &'a [Migration],
     applied: &[AppliedMigration],
+    baseline: Option<&Baseline>,
 ) -> Vec<&'a Migration> {
     let applied_ids: std::collections::HashSet<&str> =
         applied.iter().map(|a| a.id.as_str()).collect();
 
     available
         .iter()
-        .filter(|m| !applied_ids.contains(m.id.as_str()))
+        .filter(|m| {
+            // Already applied
+            if applied_ids.contains(m.id.as_str()) {
+                return false;
+            }
+            // Covered by baseline (only skip if not in history)
+            if let Some(b) = baseline {
+                if m.version.as_str() <= b.version.as_str() {
+                    return false;
+                }
+            }
+            true
+        })
         .collect()
 }
 
@@ -129,10 +144,43 @@ mod tests {
             applied_at: Utc::now(),
         }];
 
-        let pending = get_pending(&available, &applied);
+        let pending = get_pending(&available, &applied, None);
         assert_eq!(pending.len(), 2);
         assert_eq!(pending[0].id, "1f710-second");
         assert_eq!(pending[1].id, "1f720-third");
+    }
+
+    #[test]
+    fn test_get_pending_with_baseline() {
+        let available = vec![
+            Migration {
+                id: "1f700-first".to_string(),
+                version: "1f700".to_string(),
+                file_path: "1f700-first.sh".into(),
+            },
+            Migration {
+                id: "1f710-second".to_string(),
+                version: "1f710".to_string(),
+                file_path: "1f710-second.sh".into(),
+            },
+            Migration {
+                id: "1f720-third".to_string(),
+                version: "1f720".to_string(),
+                file_path: "1f720-third.sh".into(),
+            },
+        ];
+
+        // No applied migrations, but baseline at 1f710
+        let applied: Vec<AppliedMigration> = vec![];
+        let baseline = Baseline {
+            version: "1f710".to_string(),
+            created: Utc::now(),
+            summary: None,
+        };
+
+        let pending = get_pending(&available, &applied, Some(&baseline));
+        assert_eq!(pending.len(), 1);
+        assert_eq!(pending[0].id, "1f720-third");
     }
 
     #[test]

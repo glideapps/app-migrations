@@ -140,17 +140,21 @@ Migrations run in order by their version prefix (e.g., `1fb2g-`) and are tracked
 | `migrate status`            | Show applied and pending migrations |
 | `migrate up`                | Apply all pending migrations        |
 | `migrate create <name>`     | Create a new migration file         |
+| `migrate baseline <version>`| Mark a version as the baseline      |
 
 ### Options
 
-| Option                     | Description                           | Default      |
-| -------------------------- | ------------------------------------- | ------------ |
-| `-r, --root <path>`        | Project root directory                | `.`          |
-| `-m, --migrations <path>`  | Migrations directory                  | `migrations` |
-| `--dry-run`                | Preview changes (up only)             | `false`      |
-| `-t, --template <name>`    | Template to use (create only)         | `bash`       |
-| `-d, --description <text>` | Migration description (create only)   | -            |
-| `--list-templates`         | List available templates (create only)| -            |
+| Option                     | Description                                      | Default      |
+| -------------------------- | ------------------------------------------------ | ------------ |
+| `-r, --root <path>`        | Project root directory                           | `.`          |
+| `-m, --migrations <path>`  | Migrations directory                             | `migrations` |
+| `--dry-run`                | Preview changes (up, baseline)                   | `false`      |
+| `--baseline`               | Create baseline after applying (up only)         | `false`      |
+| `--keep`                   | Keep migration files when baselining (up, baseline) | `false`   |
+| `-t, --template <name>`    | Template to use (create only)                    | `bash`       |
+| `-d, --description <text>` | Migration description (create only)              | -            |
+| `-s, --summary <text>`     | Baseline summary (baseline only)                 | -            |
+| `--list-templates`         | List available templates (create only)           | -            |
 
 ## Available Templates
 

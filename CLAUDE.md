@@ -8,9 +8,14 @@ Generic file migration tool for applying ordered transformations to a project di
 migrate status                              # Show applied/pending migrations
 migrate up                                  # Apply all pending migrations
 migrate up --dry-run                        # Preview without applying
+migrate up --baseline                       # Apply and create baseline at final version
+migrate up --baseline --keep                # Apply and baseline without deleting files
 migrate create <name>                       # Create new bash migration
 migrate create <name> --template ts         # Create TypeScript migration
 migrate create <name> --list-templates      # List available templates
+migrate baseline <version>                  # Create baseline at specific version
+migrate baseline <version> --dry-run        # Preview baseline changes
+migrate baseline <version> --keep           # Baseline without deleting files
 ```
 
 ## Options
@@ -68,11 +73,13 @@ await fs.writeFile(`${projectRoot}/config.json`, '{}');
 - `src/state.rs` - History tracking (`.history` file)
 - `src/version.rs` - Base36 version generation and parsing
 - `src/templates.rs` - Embedded migration templates
+- `src/baseline.rs` - Baseline management (`.baseline` file)
 - `src/commands/` - CLI command implementations
   - `mod.rs` - Command module exports
   - `status.rs` - Status command (shows version summary)
   - `up.rs` - Up command
   - `create.rs` - Create command (generates time-based version)
+  - `baseline.rs` - Baseline command (marks versions as applied)
 - `templates/` - Template source files (bash.sh, typescript.ts, python.py, node.js, ruby.rb)
 
 ## Development
