@@ -36,7 +36,7 @@ pub fn read_history(migrations_dir: &Path) -> Result<HistoryState> {
     let legacy_baseline_path = migrations_dir.join(LEGACY_BASELINE_FILE);
 
     // Migrate legacy files if needed
-    if !history_path.exists() && legacy_history_path.exists() {
+    if !history_path.exists() && (legacy_history_path.exists() || legacy_baseline_path.exists()) {
         migrate_legacy_files(migrations_dir)?;
     }
 
@@ -450,6 +450,31 @@ mod tests {
             },
         ];
         assert_eq!(get_target_version(&available), Some("1f710".to_string()));
+    }
+
+    #[test]
+    fn test_read_history_migrates_baseline_only() {
+        // Test that a legacy .baseline file without .history is properly migrated
+        let temp_dir = tempfile::tempdir().unwrap();
+        let migrations_dir = temp_dir.path();
+
+        // Create only a legacy .baseline file (no .history)
+        let baseline_content = "version: 1f710\ncreated: 2024-06-15T14:30:00Z\n";
+        fs::write(migrations_dir.join(".baseline"), baseline_content).unwrap();
+
+        // Read history should migrate the baseline
+        let state = read_history(migrations_dir).unwrap();
+
+        // Verify baseline was read
+        assert!(state.baseline.is_some());
+        let baseline = state.baseline.unwrap();
+        assert_eq!(baseline.version, "1f710");
+
+        // Verify new history file was created
+        assert!(migrations_dir.join("history").exists());
+
+        // Verify legacy .baseline was deleted
+        assert!(!migrations_dir.join(".baseline").exists());
     }
 
     #[test]
