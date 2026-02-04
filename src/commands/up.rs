@@ -2,7 +2,7 @@ use anyhow::Result;
 use chrono::Utc;
 use std::path::Path;
 
-use crate::baseline::delete_baselined_migrations;
+use crate::baseline::{delete_baselined_migrations, DeletedItem};
 use crate::executor::execute;
 use crate::loader::discover_migrations;
 use crate::state::{append_baseline, append_history, get_pending, read_history, Baseline};
@@ -105,7 +105,24 @@ pub fn run(
                         .filter(|m| m.version.as_str() <= version.as_str())
                         .collect();
                     if !to_delete.is_empty() {
-                        println!("Would delete {} migration file(s)", to_delete.len());
+                        let asset_dir_count = to_delete
+                            .iter()
+                            .filter(|m| {
+                                m.file_path
+                                    .parent()
+                                    .map(|p| p.join(&m.id).is_dir())
+                                    .unwrap_or(false)
+                            })
+                            .count();
+                        if asset_dir_count > 0 {
+                            println!(
+                                "Would delete {} migration file(s) and {} asset directory(ies)",
+                                to_delete.len(),
+                                asset_dir_count
+                            );
+                        } else {
+                            println!("Would delete {} migration file(s)", to_delete.len());
+                        }
                     }
                 }
             } else {
@@ -120,8 +137,13 @@ pub fn run(
 
                 if !keep {
                     let deleted = delete_baselined_migrations(&version, &available)?;
-                    if !deleted.is_empty() {
-                        println!("Deleted {} migration file(s)", deleted.len());
+                    let (files, dirs): (Vec<&DeletedItem>, Vec<&DeletedItem>) =
+                        deleted.iter().partition(|d| !d.is_directory);
+                    if !files.is_empty() {
+                        println!("Deleted {} migration file(s)", files.len());
+                    }
+                    if !dirs.is_empty() {
+                        println!("Deleted {} asset directory(ies)", dirs.len());
                     }
                 }
             }

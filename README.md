@@ -176,8 +176,22 @@ migrate up --baseline --keep    # Apply and baseline without deleting files
 
 **What baselining does:**
 - Records the baseline version in the `history` file
-- Optionally deletes migration files at or before that version
+- Deletes migration files at or before that version (unless `--keep`)
+- Deletes any associated asset directories (directories named after the migration ID, e.g., `1fb2g-setup-eslint/`)
 - Future `migrate up` skips migrations covered by the baseline
+
+**Asset directories:** Migrations can have companion directories for assets (templates, configs, data files). Name the directory after the migration ID:
+
+```
+migrations/
+├── 1fb2g-setup-eslint.sh       # Migration script
+├── 1fb2g-setup-eslint/         # Asset directory (deleted with migration)
+│   ├── .eslintrc.json
+│   └── .eslintignore
+└── ...
+```
+
+When `1fb2g` is baselined, both the `.sh` file and the `1fb2g-setup-eslint/` directory are deleted.
 
 ## Directory Structure
 
