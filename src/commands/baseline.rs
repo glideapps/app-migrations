@@ -2,7 +2,7 @@ use anyhow::Result;
 use chrono::Utc;
 use std::path::Path;
 
-use crate::baseline::{delete_baselined_migrations, validate_baseline};
+use crate::baseline::{delete_baselined_migrations, validate_baseline, DeletedItem};
 use crate::loader::discover_migrations;
 use crate::state::{append_baseline, read_history, Baseline};
 
@@ -54,16 +54,32 @@ pub fn run(
     println!();
 
     if !to_delete.is_empty() && !keep {
-        println!(
-            "{} migration file(s) to delete:",
-            if dry_run { "Would delete" } else { "Deleting" }
-        );
+        println!("{}:", if dry_run { "Would delete" } else { "Deleting" });
         for migration in &to_delete {
-            println!("  - {}", migration.id);
+            let asset_dir_exists = migration
+                .file_path
+                .parent()
+                .map(|p| p.join(&migration.id).is_dir())
+                .unwrap_or(false);
+            if asset_dir_exists {
+                println!("  - {} (file + {}/)", migration.id, migration.id);
+            } else {
+                println!("  - {}", migration.id);
+            }
         }
         println!();
     } else if keep {
-        println!("Keeping migration files (--keep flag)");
+        let has_any_asset_dir = to_delete.iter().any(|m| {
+            m.file_path
+                .parent()
+                .map(|p| p.join(&m.id).is_dir())
+                .unwrap_or(false)
+        });
+        if has_any_asset_dir {
+            println!("Keeping migration files and asset directories (--keep flag)");
+        } else {
+            println!("Keeping migration files (--keep flag)");
+        }
         println!();
     }
 
@@ -81,10 +97,17 @@ pub fn run(
     append_baseline(&migrations_path, &baseline)?;
     println!("Added baseline to history file");
 
-    // Delete old migration files unless --keep was specified
+    // Delete old migration files and asset directories unless --keep was specified
     if !keep && !to_delete.is_empty() {
         let deleted = delete_baselined_migrations(version, &available)?;
-        println!("Deleted {} migration file(s)", deleted.len());
+        let (files, dirs): (Vec<&DeletedItem>, Vec<&DeletedItem>) =
+            deleted.iter().partition(|d| !d.is_directory);
+        if !files.is_empty() {
+            println!("Deleted {} migration file(s)", files.len());
+        }
+        if !dirs.is_empty() {
+            println!("Deleted {} asset directory(ies)", dirs.len());
+        }
     }
 
     println!();
