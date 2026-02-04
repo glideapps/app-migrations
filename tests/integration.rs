@@ -232,7 +232,7 @@ touch "$MIGRATE_PROJECT_ROOT/created-by-migration.txt"
     );
 
     // Check history file
-    let history = migrations_dir.join(".history");
+    let history = migrations_dir.join("history");
     assert!(history.exists(), "History file should be created");
 
     let history_content = fs::read_to_string(&history).unwrap();
@@ -281,7 +281,7 @@ touch "$MIGRATE_PROJECT_ROOT/should-not-exist.txt"
 
     // History should NOT be updated
     assert!(
-        !migrations_dir.join(".history").exists(),
+        !migrations_dir.join("history").exists(),
         "Dry run should not update history"
     );
 }
@@ -347,7 +347,7 @@ touch "$MIGRATE_PROJECT_ROOT/third.txt"
     assert!(!temp_dir.path().join("third.txt").exists());
 
     // History should only contain first migration
-    let history = fs::read_to_string(migrations_dir.join(".history")).unwrap();
+    let history = fs::read_to_string(migrations_dir.join("history")).unwrap();
     assert!(history.contains("00001-success"));
     assert!(!history.contains("00002-fail"));
 }
@@ -373,7 +373,7 @@ fn test_status_shows_applied_and_pending() {
 
     // Write history for first migration only
     fs::write(
-        migrations_dir.join(".history"),
+        migrations_dir.join("history"),
         "00001-first 2024-01-01T00:00:00+00:00\n",
     )
     .unwrap();

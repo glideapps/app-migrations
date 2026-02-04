@@ -372,7 +372,7 @@ EOF
     assert!(temp_dir.path().join("CHANGELOG.md").exists());
 
     // Verify history contains all migrations
-    let history = fs::read_to_string(temp_dir.path().join("migrations/.history")).unwrap();
+    let history = fs::read_to_string(temp_dir.path().join("migrations/history")).unwrap();
     assert!(history.contains("00001-bump-version"));
     assert!(history.contains("00002-add-feature"));
     assert!(history.contains("00003-create-changelog"));

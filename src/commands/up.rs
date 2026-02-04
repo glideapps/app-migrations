@@ -2,10 +2,10 @@ use anyhow::Result;
 use chrono::Utc;
 use std::path::Path;
 
-use crate::baseline::{delete_baselined_migrations, read_baseline, write_baseline, Baseline};
+use crate::baseline::delete_baselined_migrations;
 use crate::executor::execute;
 use crate::loader::discover_migrations;
-use crate::state::{append_history, get_pending, read_history};
+use crate::state::{append_baseline, append_history, get_pending, read_history, Baseline};
 use crate::ExecutionContext;
 
 /// Apply all pending migrations
@@ -37,9 +37,8 @@ pub fn run(
     }
 
     let available = discover_migrations(&migrations_path)?;
-    let applied = read_history(&migrations_path)?;
-    let baseline = read_baseline(&migrations_path)?;
-    let pending = get_pending(&available, &applied, baseline.as_ref());
+    let state = read_history(&migrations_path)?;
+    let pending = get_pending(&available, &state);
 
     if pending.is_empty() {
         println!("No pending migrations.");
@@ -116,7 +115,7 @@ pub fn run(
                     summary: None,
                 };
 
-                write_baseline(&migrations_path, &new_baseline)?;
+                append_baseline(&migrations_path, &new_baseline)?;
                 println!("Created baseline at version '{}'", version);
 
                 if !keep {
