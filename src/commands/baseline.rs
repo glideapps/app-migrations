@@ -2,12 +2,9 @@ use anyhow::Result;
 use chrono::Utc;
 use std::path::Path;
 
-use crate::baseline::{
-    delete_baselined_migrations, read_baseline, validate_baseline, write_baseline, Baseline,
-};
-
+use crate::baseline::{delete_baselined_migrations, validate_baseline};
 use crate::loader::discover_migrations;
-use crate::state::read_history;
+use crate::state::{append_baseline, read_history, Baseline};
 
 /// Create a baseline at the specified version
 pub fn run(
@@ -33,11 +30,10 @@ pub fn run(
     }
 
     let available = discover_migrations(&migrations_path)?;
-    let applied = read_history(&migrations_path)?;
-    let existing_baseline = read_baseline(&migrations_path)?;
+    let state = read_history(&migrations_path)?;
 
     // Validate the baseline
-    validate_baseline(version, &available, &applied, existing_baseline.as_ref())?;
+    validate_baseline(version, &available, &state.applied, state.baseline.as_ref())?;
 
     // Find migrations that would be deleted
     let to_delete: Vec<_> = available
@@ -82,8 +78,8 @@ pub fn run(
         summary: summary.map(|s| s.to_string()),
     };
 
-    write_baseline(&migrations_path, &baseline)?;
-    println!("Created .baseline file");
+    append_baseline(&migrations_path, &baseline)?;
+    println!("Added baseline to history file");
 
     // Delete old migration files unless --keep was specified
     if !keep && !to_delete.is_empty() {

@@ -1,7 +1,6 @@
 use anyhow::Result;
 use std::path::Path;
 
-use crate::baseline::read_baseline;
 use crate::loader::discover_migrations;
 use crate::state::{get_current_version, get_pending, get_target_version, read_history};
 
@@ -22,16 +21,15 @@ pub fn run(project_root: &Path, migrations_dir: &Path) -> Result<()> {
     }
 
     let available = discover_migrations(&migrations_path)?;
-    let applied = read_history(&migrations_path)?;
-    let baseline = read_baseline(&migrations_path)?;
-    let pending = get_pending(&available, &applied, baseline.as_ref());
+    let state = read_history(&migrations_path)?;
+    let pending = get_pending(&available, &state);
 
-    if available.is_empty() && baseline.is_none() {
+    if available.is_empty() && state.baseline.is_none() {
         println!("No migrations found in: {}", migrations_path.display());
         return Ok(());
     }
 
-    let current_version = get_current_version(&available, &applied);
+    let current_version = get_current_version(&available, &state.applied);
     let target_version = get_target_version(&available);
 
     println!("Migration Status");
@@ -39,7 +37,7 @@ pub fn run(project_root: &Path, migrations_dir: &Path) -> Result<()> {
     println!();
 
     // Show baseline info if present
-    if let Some(ref b) = baseline {
+    if let Some(ref b) = state.baseline {
         println!("Baseline: {} ({})", b.version, b.created.format("%Y-%m-%d"));
         if let Some(ref summary) = b.summary {
             for line in summary.lines() {
@@ -51,10 +49,10 @@ pub fn run(project_root: &Path, migrations_dir: &Path) -> Result<()> {
 
     // Show version summary line
     match (&current_version, &target_version) {
-        (None, Some(target)) if baseline.is_some() => {
+        (None, Some(target)) if state.baseline.is_some() => {
             println!(
                 "Version: {} -> {} ({} pending)",
-                baseline.as_ref().unwrap().version,
+                state.baseline.as_ref().unwrap().version,
                 target,
                 pending.len()
             );
@@ -73,10 +71,10 @@ pub fn run(project_root: &Path, migrations_dir: &Path) -> Result<()> {
                 pending.len()
             );
         }
-        (None, None) if baseline.is_some() => {
+        (None, None) if state.baseline.is_some() => {
             println!(
                 "Version: {} (up to date, baselined)",
-                baseline.as_ref().unwrap().version
+                state.baseline.as_ref().unwrap().version
             );
         }
         _ => {}
@@ -84,11 +82,12 @@ pub fn run(project_root: &Path, migrations_dir: &Path) -> Result<()> {
     println!();
 
     // Show applied migrations
-    if !applied.is_empty() {
-        println!("Applied ({}):", applied.len());
-        for migration in &applied {
+    if !state.applied.is_empty() {
+        println!("Applied ({}):", state.applied.len());
+        for migration in &state.applied {
             // Check if this migration is at or before baseline
-            let is_baselined = baseline
+            let is_baselined = state
+                .baseline
                 .as_ref()
                 .is_some_and(|b| extract_version(&migration.id) <= Some(b.version.clone()));
 
