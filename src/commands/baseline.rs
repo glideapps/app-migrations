@@ -54,14 +54,7 @@ pub fn run(
     println!();
 
     if !to_delete.is_empty() && !keep {
-        println!(
-            "{}:",
-            if dry_run {
-                "Would delete"
-            } else {
-                "Deleting"
-            }
-        );
+        println!("{}:", if dry_run { "Would delete" } else { "Deleting" });
         for migration in &to_delete {
             let asset_dir_exists = migration
                 .file_path
