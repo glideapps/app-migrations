@@ -11,13 +11,15 @@ Pre-merge review: `/final-review`
 
 ## Process
 
-### 0. Fetch Latest
+### 0. Fetch Latest and Identify Changes
 
 Run `git fetch origin main` to ensure comparisons use the latest main branch.
 
+**IMPORTANT:** Always use `origin/main` (not `main`) for all diff comparisons to ensure you're comparing against the actual remote state, not a potentially stale local branch.
+
 ### 1. Test Coverage
 
-- Run `git diff main --name-only` to identify changed files
+- Run `git diff origin/main --name-only` to identify changed files
 - Confirm each core module (`src/*.rs` excluding test modules) has corresponding tests
 - Current modules requiring tests: `loader.rs`, `executor.rs`, `state.rs`
 - Note: `main.rs`, `lib.rs`, `templates.rs`, and `src/commands/` do not require separate unit tests
@@ -57,7 +59,9 @@ Check for:
 
 ### 4. Version Update
 
-Check `Cargo.toml` version against change scope:
+Check if `Cargo.toml` version changed in this PR using `git diff origin/main -- Cargo.toml`.
+
+Evaluate version against change scope:
 
 - **Major:** Breaking changes (removed features, incompatible API changes)
 - **Minor:** New features (new CLI commands, new public API functions)
@@ -78,8 +82,8 @@ To trigger a release, simply bump the version in `Cargo.toml` before merging.
 ### 5. PR Metadata (if PR exists)
 
 - `gh pr view` - check current title/description
-- `git log main..HEAD --oneline` - see commits
-- `git diff main --stat` - see change scope
+- `git log origin/main..HEAD --oneline` - see commits
+- `git diff origin/main --stat` - see change scope
 
 **Fix:** Use `gh pr edit --title` and `gh pr edit --body` to update.
 
