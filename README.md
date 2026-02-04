@@ -119,7 +119,7 @@ await fs.writeFile(
 
 ### 3. Applying Migrations
 
-Run `migrate up` to apply all pending migrations in order. Each successful migration is recorded in `.history`, so it won't run again.
+Run `migrate up` to apply all pending migrations in order. Each successful migration is recorded in `history`, so it won't run again.
 
 ```bash
 migrate up              # Apply all pending
@@ -175,7 +175,7 @@ migrate up --baseline --keep    # Apply and baseline without deleting files
 - You want to reduce clutter in the migrations directory
 
 **What baselining does:**
-- Creates/updates `.baseline` file with the baseline version
+- Records the baseline version in the `history` file
 - Optionally deletes migration files at or before that version
 - Future `migrate up` skips migrations covered by the baseline
 
@@ -184,8 +184,7 @@ migrate up --baseline --keep    # Apply and baseline without deleting files
 ```
 your-project/
 ├── migrations/
-│   ├── .history          # Tracks applied migrations (auto-generated)
-│   ├── .baseline         # Baseline marker (optional, from baselining)
+│   ├── history           # Tracks applied migrations and baseline (auto-generated)
 │   ├── 1fc2h-add-prettier.sh
 │   └── 1fc3h-configure-ci.ts
 └── ...

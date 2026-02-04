@@ -70,7 +70,7 @@ await fs.writeFile(`${projectRoot}/config.json`, '{}');
 - `src/lib.rs` - Core types and public API
 - `src/loader.rs` - Migration discovery
 - `src/executor.rs` - Subprocess execution
-- `src/state.rs` - History tracking (`history` file, includes baseline)
+- `src/state.rs` - History tracking (consolidated `history` file with applied migrations and baseline)
 - `src/version.rs` - Base36 version generation and parsing
 - `src/templates.rs` - Embedded migration templates
 - `src/baseline.rs` - Baseline validation and file deletion
